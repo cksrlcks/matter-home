@@ -2,8 +2,13 @@ import { AddDeviceButton } from "@/components/add-device-button";
 import { DeviceList } from "@/components/device-list";
 import { EnergySummary } from "@/components/energy-summary";
 import { LogoutButton } from "@/components/logout-button";
+import { connection } from "next/server";
 
-export default function HomePage() {
+export default async function HomePage() {
+  // 빌드 시점이 아니라 요청 시점의 env를 읽도록 동적 렌더링
+  await connection();
+  const external = process.env.EXTERNAL_MODE === "true";
+
   return (
     <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-6 sm:py-10">
       <header className="mb-6 flex items-center justify-between gap-4">
@@ -12,12 +17,20 @@ export default function HomePage() {
           <p className="text-sm text-muted-foreground">Matter 기기 관리</p>
         </div>
         <div className="flex items-center gap-2">
-          <AddDeviceButton />
+          {!external && <AddDeviceButton />}
           <LogoutButton />
         </div>
       </header>
-      <EnergySummary />
-      <DeviceList />
+      {external ? (
+        <p className="text-sm text-muted-foreground">
+          외부 환경 모드입니다. 기기 목록과 전력 사용량은 표시되지 않습니다.
+        </p>
+      ) : (
+        <>
+          <EnergySummary />
+          <DeviceList />
+        </>
+      )}
     </main>
   );
 }

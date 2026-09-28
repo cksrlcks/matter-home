@@ -1,0 +1,31 @@
+# Dokploy(Compose) 배포용.
+# 비밀값(AUTH_*, DATABASE_URL)은 이 파일에 직접 적지 않고
+# Dokploy 애플리케이션의 "Environment" 설정에서 주입한다(git에 노출 방지).
+#
+# Dokploy Environment 예시:
+#   AUTH_USERNAME=admin
+#   AUTH_PASSWORD=<비밀번호>
+#   AUTH_SECRET=<openssl rand -hex 32 로 생성한 값>
+#   DATABASE_URL=postgresql://matter:<password>@matter-db:5432/matter
+
+services:
+  app:
+    build: .
+    restart: unless-stopped
+
+    environment:
+      NODE_ENV: production
+      # Matter Server(WebSocket). 라즈베리파이 호스트 주소. (비밀 아님)
+      MATTER_SERVER_URL: ${MATTER_SERVER_URL:-ws://192.168.0.100:5580/ws}
+      # 아래 값들은 Dokploy Environment에서 주입 (레포에는 남기지 않음)
+      DATABASE_URL: ${DATABASE_URL}
+      AUTH_USERNAME: ${AUTH_USERNAME}
+      AUTH_PASSWORD: ${AUTH_PASSWORD}
+      AUTH_SECRET: ${AUTH_SECRET}
+
+    networks:
+      - matter-network
+
+networks:
+  matter-network:
+    external: true

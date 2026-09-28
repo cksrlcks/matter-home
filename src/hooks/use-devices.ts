@@ -6,11 +6,12 @@ import {
   useQueryClient,
 } from "@tanstack/react-query";
 
-import type { DeviceDto } from "@/types/matter";
+import type { CommissionableDeviceDto, DeviceDto } from "@/types/matter";
 
 export const deviceKeys = {
   all: ["devices"] as const,
   list: () => [...deviceKeys.all, "list"] as const,
+  discover: () => [...deviceKeys.all, "discover"] as const,
 };
 
 // 기기 상태는 명령 직후 바로 반영되지 않고, attribute_updated 이벤트로 뒤늦게
@@ -152,6 +153,27 @@ export function useResetDeviceName() {
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: deviceKeys.list() });
     },
+  });
+}
+
+async function discoverDevices(): Promise<CommissionableDeviceDto[]> {
+  const res = await fetch("/api/devices/discover");
+  if (!res.ok) {
+    const data = (await res.json().catch(() => ({}))) as { message?: string };
+    throw new Error(data.message ?? "기기 검색에 실패했습니다.");
+  }
+  return res.json();
+}
+
+// 주변 commissionable 기기 검색. 스캔은 비싸므로 사용자가 버튼을 눌렀을 때만
+// refetch()로 실행한다. (자동 실행/폴링/재시도 없음)
+export function useDiscoverDevices() {
+  return useQuery({
+    queryKey: deviceKeys.discover(),
+    queryFn: discoverDevices,
+    enabled: false,
+    retry: false,
+    gcTime: 0,
   });
 }
 

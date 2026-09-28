@@ -1,5 +1,6 @@
 import { AddDeviceButton } from "@/components/add-device-button";
 import { DeviceList } from "@/components/device-list";
+import { EnergySummary } from "@/components/energy-summary";
 import { LogoutButton } from "@/components/logout-button";
 
 export default function HomePage() {
@@ -15,6 +16,7 @@ export default function HomePage() {
           <LogoutButton />
         </div>
       </header>
+      <EnergySummary />
       <DeviceList />
     </main>
   );

@@ -1,10 +1,16 @@
 import "server-only";
 
-import { isTestNodeId, type MatterNode } from "@matter-server/ws-client";
+import {
+  isTestNodeId,
+  type CommissionableNodeData,
+  type MatterNode,
+} from "@matter-server/ws-client";
 
 import type {
+  CommissionableDeviceDto,
   DeviceDto,
   DeviceEndpointDto,
+  DeviceEnergyDto,
   DevicePowerDto,
 } from "@/types/matter";
 
@@ -12,12 +18,19 @@ import { deleteDeviceName, getDeviceNameMap } from "@/lib/db/device-names";
 
 import { getMatterClient } from "./client";
 import { deviceTypeName } from "./device-types";
+import { vendorName } from "./vendors";
 
 // Matter attribute는 "<endpoint>/<cluster>/<attribute>" key로 저장된다.
 const ONOFF_CLUSTER_ID = 6;
 const ONOFF_ATTR_ID = 0; // OnOff.OnOff (boolean)
 const DESCRIPTOR_CLUSTER_ID = 29; // 0x1D
 const DEVICE_TYPE_LIST_ATTR_ID = 0; // Descriptor.DeviceTypeList
+const POWER_MEASUREMENT_CLUSTER_ID = 144; // 0x90 ElectricalPowerMeasurement
+const VOLTAGE_ATTR_ID = 4; // Voltage (mV)
+const ACTIVE_CURRENT_ATTR_ID = 5; // ActiveCurrent (mA)
+const ACTIVE_POWER_ATTR_ID = 8; // ActivePower (mW)
+const ENERGY_MEASUREMENT_CLUSTER_ID = 145; // 0x91 ElectricalEnergyMeasurement
+const CUMULATIVE_IMPORTED_ATTR_ID = 1; // CumulativeEnergyImported (EnergyMeasurementStruct)
 
 function endpointIds(node: MatterNode): number[] {
   const ids = new Set<number>();
@@ -76,6 +89,71 @@ function readPower(node: MatterNode): DevicePowerDto | null {
   return { endpointId, on: raw === true };
 }
 
+// int64 attribute는 number / bigint / 문자열 중 하나로 올 수 있다.
+function toNumber(value: unknown): number | null {
+  if (typeof value === "number") return Number.isFinite(value) ? value : null;
+  if (typeof value === "bigint") return Number(value);
+  if (typeof value === "string" && value.trim() !== "") {
+    const n = Number(value);
+    return Number.isFinite(n) ? n : null;
+  }
+  return null;
+}
+
+function scaled(value: unknown, divisor: number): number | null {
+  const n = toNumber(value);
+  return n === null ? null : n / divisor;
+}
+
+function findClusterEndpoint(
+  node: MatterNode,
+  clusterId: number,
+): number | null {
+  const ids = new Set<number>();
+  for (const key of Object.keys(node.attributes)) {
+    const [endpoint, cluster] = key.split("/").map(Number);
+    if (cluster === clusterId) ids.add(endpoint);
+  }
+  if (ids.size === 0) return null;
+  return Math.min(...ids);
+}
+
+function readEnergy(node: MatterNode): DeviceEnergyDto | null {
+  const powerEp = findClusterEndpoint(node, POWER_MEASUREMENT_CLUSTER_ID);
+  const energyEp = findClusterEndpoint(node, ENERGY_MEASUREMENT_CLUSTER_ID);
+  if (powerEp === null && energyEp === null) return null;
+
+  const attr = (endpoint: number | null, cluster: number, attribute: number) =>
+    endpoint === null
+      ? undefined
+      : node.attributes[`${endpoint}/${cluster}/${attribute}`];
+
+  // EnergyMeasurementStruct: { energy } 또는 wire상 { "0": energy } (단위 mWh)
+  const imported = attr(
+    energyEp,
+    ENERGY_MEASUREMENT_CLUSTER_ID,
+    CUMULATIVE_IMPORTED_ATTR_ID,
+  ) as Record<string, unknown> | null | undefined;
+  const importedMwh = imported ? (imported.energy ?? imported["0"]) : undefined;
+
+  return {
+    endpointId: (powerEp ?? energyEp) as number,
+    activePowerW: scaled(
+      attr(powerEp, POWER_MEASUREMENT_CLUSTER_ID, ACTIVE_POWER_ATTR_ID),
+      1000,
+    ),
+    voltageV: scaled(
+      attr(powerEp, POWER_MEASUREMENT_CLUSTER_ID, VOLTAGE_ATTR_ID),
+      1000,
+    ),
+    currentA: scaled(
+      attr(powerEp, POWER_MEASUREMENT_CLUSTER_ID, ACTIVE_CURRENT_ATTR_ID),
+      1000,
+    ),
+    cumulativeKwh: scaled(importedMwh, 1_000_000),
+  };
+}
+
 function toEndpointDtos(node: MatterNode): DeviceEndpointDto[] {
   return endpointIds(node).map((id) => ({
     id,
@@ -100,6 +178,7 @@ function toDeviceDto(
     online: node.available,
     endpoints: toEndpointDtos(node),
     power: readPower(node),
+    energy: readEnergy(node),
   };
 }
 
@@ -120,6 +199,30 @@ export async function getDevices(): Promise<DeviceDto[]> {
   return nodes
     .filter((node) => !isTestNodeId(node.node_id))
     .map((node) => toDeviceDto(node, nameOverrides));
+}
+
+export type EnergyReading = {
+  nodeId: string;
+  cumulativeKwh: number;
+  activePowerW: number | null;
+};
+
+// 샘플러용: 온라인 + 누적 전력량을 보고하는 노드의 현재 값.
+// (오프라인 노드의 캐시값은 오래된 값이라 기록하지 않는다)
+export async function getEnergyReadings(): Promise<EnergyReading[]> {
+  const client = await getMatterClient();
+  const readings: EnergyReading[] = [];
+  for (const node of Object.values(client.nodes)) {
+    if (isTestNodeId(node.node_id) || !node.available) continue;
+    const energy = readEnergy(node);
+    if (energy?.cumulativeKwh == null) continue;
+    readings.push({
+      nodeId: String(node.node_id),
+      cumulativeKwh: energy.cumulativeKwh,
+      activePowerW: energy.activePowerW,
+    });
+  }
+  return readings;
 }
 
 async function findNode(nodeId: string): Promise<MatterNode> {
@@ -186,6 +289,73 @@ export async function commissionDevice(rawCode: string): Promise<DeviceDto> {
   } finally {
     globalForCommission.__commissioning = false;
   }
+}
+
+// discover는 BLE 스캔 + mDNS 조회를 모아서 반환하므로 수 초~수십 초 걸린다.
+const DISCOVER_TIMEOUT_MS = 60_000;
+
+function commissionableName(node: CommissionableNodeData): string {
+  if (node.device_name) return node.device_name;
+  const typeName =
+    node.device_type !== undefined ? deviceTypeName(node.device_type) : undefined;
+  const vendor =
+    node.vendor_id !== undefined ? vendorName(node.vendor_id) : undefined;
+  if (vendor && typeName) return `${vendor} ${typeName}`;
+  if (typeName) return typeName;
+  if (vendor) return `${vendor} 기기`;
+  return "알 수 없는 Matter 기기";
+}
+
+function toCommissionableDto(
+  node: CommissionableNodeData,
+): CommissionableDeviceDto {
+  const addresses = node.addresses ?? [];
+  const id =
+    node.instance_name ??
+    `${node.vendor_id ?? "?"}-${node.product_id ?? "?"}-${node.long_discriminator ?? "?"}`;
+  return {
+    id,
+    name: commissionableName(node),
+    vendorName:
+      node.vendor_id !== undefined ? vendorName(node.vendor_id) : undefined,
+    vendorId: node.vendor_id,
+    productId: node.product_id,
+    deviceType:
+      node.device_type !== undefined
+        ? deviceTypeName(node.device_type)
+        : undefined,
+    discriminator: node.long_discriminator,
+    commissioningMode: node.commissioning_mode,
+    transport: addresses.length > 0 ? "network" : "ble",
+    addresses,
+  };
+}
+
+// 아직 등록되지 않은 commissionable 기기 검색 (Matter BLE 광고 fff6 / _matterc._udp mDNS).
+// "페어링 모드인 모든 BLE 기기"가 아니라 Matter commissioning 광고를 내는 기기만 찾는다.
+// 실제 등록에는 여전히 setup code(QR/Manual)가 필요하다.
+export async function discoverCommissionableDevices(): Promise<
+  CommissionableDeviceDto[]
+> {
+  // commissioning 중에는 BLE 라디오를 쓰고 있으므로 스캔을 겹치지 않는다.
+  if (globalForCommission.__commissioning) {
+    throw new CommissioningInProgressError();
+  }
+
+  const client = await getMatterClient();
+  const nodes = await client.discoverCommissionableNodes(DISCOVER_TIMEOUT_MS);
+
+  // BLE와 mDNS 양쪽으로 같은 기기가 잡힐 수 있어 id 기준으로 중복 제거한다.
+  // 주소 정보가 있는(network) 쪽을 우선한다.
+  const byId = new Map<string, CommissionableDeviceDto>();
+  for (const node of nodes) {
+    const dto = toCommissionableDto(node);
+    const existing = byId.get(dto.id);
+    if (!existing || (existing.transport === "ble" && dto.transport === "network")) {
+      byId.set(dto.id, dto);
+    }
+  }
+  return [...byId.values()];
 }
 
 // fabric에서 노드 제거 (decommission). 사용자 지정 이름도 함께 정리한다.

@@ -3,6 +3,7 @@ import { cn } from "@/lib/utils";
 import type { DeviceDto } from "@/types/matter";
 
 import { DeviceName } from "./device-name";
+import { EnergyStats } from "./energy-stats";
 import { PowerSwitch } from "./power-switch";
 import { RemoveDeviceButton } from "./remove-device-button";
 
@@ -60,6 +61,10 @@ export function DeviceCard({ device }: { device: DeviceDto }) {
         <p className="rounded-lg bg-muted px-4 py-3 text-center text-sm text-muted-foreground">
           On/Off를 지원하지 않는 기기입니다.
         </p>
+      )}
+
+      {device.energy && (
+        <EnergyStats energy={device.energy} online={device.online} />
       )}
 
       {process.env.NODE_ENV !== "production" && (

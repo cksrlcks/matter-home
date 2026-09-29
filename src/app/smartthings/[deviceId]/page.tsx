@@ -148,7 +148,7 @@ export default async function CameraPage({
               <video
                 src={`${media}?type=clip&t=${encodeURIComponent(status.clipTime ?? "")}`}
                 controls
-                preload="metadata"
+                preload="none" // 재생을 누를 때만 요청 (실패 시 브라우저 재시도가 API 한도를 소진)
                 className="w-full rounded-lg bg-muted"
               />
             </Card>

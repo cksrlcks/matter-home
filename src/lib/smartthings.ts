@@ -103,10 +103,11 @@ async function fetchCameraStatus(deviceId: string): Promise<CameraStatus> {
   };
 }
 
-// 기기 상태 조회는 기기당 1분 10회로 제한된다(초과 시 429).
-// 상세 화면 한 번에 화면/스냅샷/클립이 각각 조회하므로 10초간 결과를 재사용한다.
+// 기기 상태 조회는 기기당 1분 10회로 제한된다(초과 시 429). go2rtc 스크립트도 같은 한도를 쓴다.
+// 화면/스냅샷/클립 요청과, 실패 시 브라우저의 미디어 재시도가 한도를 소진하지 않도록
+// 성공/실패 모두 30초간 재사용한다.
 // ponytail: 프로세스 메모리 캐시, 인스턴스가 여러 개면 공유되지 않음
-const STATUS_TTL_MS = 10_000;
+const STATUS_TTL_MS = 30_000;
 const statusCache = new Map<string, { at: number; value: Promise<CameraStatus> }>();
 
 export function getCameraStatus(deviceId: string): Promise<CameraStatus> {
@@ -115,8 +116,6 @@ export function getCameraStatus(deviceId: string): Promise<CameraStatus> {
 
   const value = fetchCameraStatus(deviceId);
   statusCache.set(deviceId, { at: Date.now(), value });
-  // 실패(429 등)는 캐시하지 않는다.
-  value.catch(() => statusCache.delete(deviceId));
   return value;
 }
 

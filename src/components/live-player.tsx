@@ -119,11 +119,15 @@ export function LivePlayer({ deviceId }: { deviceId: string }) {
     ws.addEventListener("close", () => setStatus("error"));
 
     const onPlaying = () => setStatus("playing");
+    // 디코딩 오류 등으로 재생이 멈추면 다시 시도 버튼을 보여준다.
+    const onError = () => setStatus("error");
     video.addEventListener("playing", onPlaying);
+    video.addEventListener("error", onError);
     video.play().catch(() => {});
 
     return () => {
       video.removeEventListener("playing", onPlaying);
+      video.removeEventListener("error", onError);
       ws.close();
       video.removeAttribute("src");
       video.srcObject = null;

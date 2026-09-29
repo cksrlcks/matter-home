@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { connection } from "next/server";
 import { z } from "zod";
 
+import { LivePlayer } from "@/components/live-player";
 import { LogoutButton } from "@/components/logout-button";
 import { NavTabs } from "@/components/nav-tabs";
 import { SmartThingsSwitch } from "@/components/smartthings-switch";
@@ -11,9 +12,7 @@ import { Card } from "@/components/ui/card";
 import { getCameraStatus, getDevice, isCamera } from "@/lib/smartthings";
 
 const formatTime = (iso: string | null | undefined) =>
-  iso
-    ? new Date(iso).toLocaleString("ko-KR", { timeZone: "Asia/Seoul" })
-    : "-";
+  iso ? new Date(iso).toLocaleString("ko-KR", { timeZone: "Asia/Seoul" }) : "-";
 
 export default async function CameraPage({
   params,
@@ -48,33 +47,45 @@ export default async function CameraPage({
       </Link>
 
       <div className="grid gap-4 lg:grid-cols-3">
-        <Card className="flex flex-col gap-3 p-5 lg:col-span-2">
-          <div className="flex items-center justify-between gap-3">
-            <div className="min-w-0">
-              <h2 className="truncate text-lg font-semibold">
-                {device.label || device.name}
-              </h2>
+        <div className="flex flex-col gap-4 lg:col-span-2">
+          <Card className="flex flex-col gap-3 p-5">
+            <h2 className="truncate text-lg font-semibold">
+              {device.label || device.name} · 실시간
+            </h2>
+            {status.on === false ? (
               <p className="text-sm text-muted-foreground">
-                촬영: {formatTime(status.captureTime)}
+                카메라가 꺼져 있습니다. 오른쪽에서 전원을 켜 주세요.
               </p>
+            ) : (
+              <LivePlayer deviceId={deviceId} />
+            )}
+          </Card>
+
+          <Card className="flex flex-col gap-3 p-5">
+            <div className="flex items-center justify-between gap-3">
+              <div className="min-w-0">
+                <h2 className="text-lg font-semibold">스냅샷</h2>
+                <p className="text-sm text-muted-foreground">
+                  촬영: {formatTime(status.captureTime)}
+                </p>
+              </div>
+              <SnapshotButton deviceId={deviceId} />
             </div>
-            <SnapshotButton deviceId={deviceId} />
-          </div>
-          {status.imageUrl ? (
-            // 프록시 이미지라 next/image 최적화 대상이 아니다. captureTime으로 캐시를 무효화한다.
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={`${media}?type=image&t=${encodeURIComponent(status.captureTime ?? "")}`}
-              alt={`${device.label || device.name} 스냅샷`}
-              className="aspect-video w-full rounded-lg bg-muted object-contain"
-            />
-          ) : (
-            <p className="text-sm text-muted-foreground">스냅샷이 없습니다.</p>
-          )}
-          <p className="text-xs text-muted-foreground">
-            실시간 영상은 SmartThings가 외부 앱에 제공하지 않아 스냅샷으로 대신합니다.
-          </p>
-        </Card>
+            {status.imageUrl ? (
+              // 프록시 이미지라 next/image 최적화 대상이 아니다. captureTime으로 캐시를 무효화한다.
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={`${media}?type=image&t=${encodeURIComponent(status.captureTime ?? "")}`}
+                alt={`${device.label || device.name} 스냅샷`}
+                className="aspect-video w-full rounded-lg bg-muted object-contain"
+              />
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                스냅샷이 없습니다.
+              </p>
+            )}
+          </Card>
+        </div>
 
         <div className="flex flex-col gap-4">
           <Card className="p-5">
@@ -87,13 +98,15 @@ export default async function CameraPage({
             <p>
               모션: {status.motion.value === "active" ? "감지됨" : "없음"}
               <span className="text-muted-foreground">
-                {" "}· {formatTime(status.motion.timestamp)}
+                {" "}
+                · {formatTime(status.motion.timestamp)}
               </span>
             </p>
             <p>
               소리: {status.sound.value === "detected" ? "감지됨" : "없음"}
               <span className="text-muted-foreground">
-                {" "}· {formatTime(status.sound.timestamp)}
+                {" "}
+                · {formatTime(status.sound.timestamp)}
               </span>
             </p>
           </Card>

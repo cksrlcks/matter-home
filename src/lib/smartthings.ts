@@ -26,7 +26,12 @@ async function stFetch<T>(path: string, init?: RequestInit): Promise<T> {
     headers: { Authorization: `Bearer ${token}`, ...init?.headers },
     cache: "no-store",
   });
-  if (!res.ok) throw new Error(`SmartThings API 오류 (${res.status})`);
+  if (!res.ok) {
+    // 호출한 쪽이 404(없는 기기)와 429(한도 초과) 등을 구분할 수 있게 status를 붙인다.
+    throw Object.assign(new Error(`SmartThings API 오류 (${res.status})`), {
+      status: res.status,
+    });
+  }
   return res.json();
 }
 

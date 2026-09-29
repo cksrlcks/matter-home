@@ -9,7 +9,23 @@ import { NavTabs } from "@/components/nav-tabs";
 import { SmartThingsSwitch } from "@/components/smartthings-switch";
 import { SnapshotButton } from "@/components/snapshot-button";
 import { Card } from "@/components/ui/card";
-import { getCameraStatus, getDevice, isCamera } from "@/lib/smartthings";
+import {
+  getCameraStatus,
+  getDevice,
+  isCamera,
+  type CameraStatus,
+} from "@/lib/smartthings";
+
+// 상태 조회 실패(429 등) 시 화면은 그대로 두고 값만 비운다. 실시간 영상은 go2rtc가 따로 받는다.
+const EMPTY_STATUS: CameraStatus = {
+  on: null,
+  imageUrl: null,
+  captureTime: null,
+  clipUrl: null,
+  clipTime: null,
+  motion: { value: null },
+  sound: { value: null },
+};
 
 const formatTime = (iso: string | null | undefined) =>
   iso ? new Date(iso).toLocaleString("ko-KR", { timeZone: "Asia/Seoul" }) : "-";
@@ -23,9 +39,14 @@ export default async function CameraPage({
   const { deviceId } = await params;
   if (!z.uuid().safeParse(deviceId).success) notFound();
 
-  const device = await getDevice(deviceId).catch(() => null);
+  // 404/403만 "없는 기기"로 본다. 한도 초과 등 다른 오류는 그대로 오류 화면으로.
+  const device = await getDevice(deviceId).catch((e: { status?: number }) => {
+    if (e.status === 404 || e.status === 403) return null;
+    throw e;
+  });
   if (!device || !isCamera(device)) notFound();
-  const status = await getCameraStatus(deviceId);
+  const loaded = await getCameraStatus(deviceId).catch(() => null);
+  const status = loaded ?? EMPTY_STATUS;
   const media = `/api/smartthings/cameras/${deviceId}/media`;
 
   return (
@@ -45,6 +66,13 @@ export default async function CameraPage({
       >
         ← 목록
       </Link>
+
+      {!loaded && (
+        <p className="mb-4 rounded-lg bg-muted px-4 py-3 text-sm text-muted-foreground">
+          SmartThings 요청이 많아 카메라 상태를 불러오지 못했습니다. 잠시 후
+          새로고침해 주세요. (실시간 영상은 그대로 볼 수 있습니다)
+        </p>
+      )}
 
       <div className="grid gap-4 lg:grid-cols-3">
         <div className="flex flex-col gap-4 lg:col-span-2">

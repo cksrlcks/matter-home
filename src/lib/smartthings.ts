@@ -49,8 +49,37 @@ export async function getSwitchState(deviceId: string): Promise<boolean | null> 
   return data.switch.value === null ? null : data.switch.value === "on";
 }
 
+// SmartThings는 기기별로 호출 한도가 있다(기기 조회 400회, 상태 조회 1분 10회, 초과 시 429).
+// 화면/스냅샷/클립 요청과 실패 시 브라우저의 미디어 재시도가 한도를 소진하지 않도록
+// 결과를 잠시 재사용하고, 실패도 30초간 재사용한다.
+// ponytail: 프로세스 메모리 캐시, 인스턴스가 여러 개면 공유되지 않음
+const FAIL_TTL_MS = 30_000;
+type CacheEntry<T> = { expires: number; value: Promise<T> };
+
+function cached<T>(
+  cache: Map<string, CacheEntry<T>>,
+  key: string,
+  ttlMs: number,
+  fn: () => Promise<T>,
+): Promise<T> {
+  const hit = cache.get(key);
+  if (hit && Date.now() < hit.expires) return hit.value;
+
+  const entry = { expires: Date.now() + ttlMs, value: fn() };
+  entry.value.catch(() => {
+    entry.expires = Math.min(entry.expires, Date.now() + FAIL_TTL_MS);
+  });
+  cache.set(key, entry);
+  return entry.value;
+}
+
+// 기기 이름/종류는 거의 바뀌지 않으므로 10분간 재사용한다.
+const deviceCache = new Map<string, CacheEntry<SmartThingsDevice>>();
+
 export function getDevice(deviceId: string): Promise<SmartThingsDevice> {
-  return stFetch(`/devices/${encodeURIComponent(deviceId)}`);
+  return cached(deviceCache, deviceId, 10 * 60_000, () =>
+    stFetch(`/devices/${encodeURIComponent(deviceId)}`),
+  );
 }
 
 async function sendCommand(deviceId: string, capability: string, command: string) {
@@ -103,20 +132,14 @@ async function fetchCameraStatus(deviceId: string): Promise<CameraStatus> {
   };
 }
 
-// 기기 상태 조회는 기기당 1분 10회로 제한된다(초과 시 429). go2rtc 스크립트도 같은 한도를 쓴다.
-// 화면/스냅샷/클립 요청과, 실패 시 브라우저의 미디어 재시도가 한도를 소진하지 않도록
-// 성공/실패 모두 30초간 재사용한다.
-// ponytail: 프로세스 메모리 캐시, 인스턴스가 여러 개면 공유되지 않음
+// 상태 조회는 go2rtc 스크립트와 같은 한도(1분 10회)를 쓰므로 30초간 재사용한다.
 const STATUS_TTL_MS = 30_000;
-const statusCache = new Map<string, { at: number; value: Promise<CameraStatus> }>();
+const statusCache = new Map<string, CacheEntry<CameraStatus>>();
 
 export function getCameraStatus(deviceId: string): Promise<CameraStatus> {
-  const hit = statusCache.get(deviceId);
-  if (hit && Date.now() - hit.at < STATUS_TTL_MS) return hit.value;
-
-  const value = fetchCameraStatus(deviceId);
-  statusCache.set(deviceId, { at: Date.now(), value });
-  return value;
+  return cached(statusCache, deviceId, STATUS_TTL_MS, () =>
+    fetchCameraStatus(deviceId),
+  );
 }
 
 async function assertCamera(deviceId: string) {
@@ -136,7 +159,10 @@ export async function takeSnapshot(deviceId: string): Promise<boolean> {
     const status = await fetchCameraStatus(deviceId);
     if (status.captureTime !== before) {
       // 새로고침된 화면이 새 이미지를 보도록 캐시를 갱신한다.
-      statusCache.set(deviceId, { at: Date.now(), value: Promise.resolve(status) });
+      statusCache.set(deviceId, {
+        expires: Date.now() + STATUS_TTL_MS,
+        value: Promise.resolve(status),
+      });
       return true;
     }
   }

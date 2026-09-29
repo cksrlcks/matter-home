@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { connection } from "next/server";
 
 import { LogoutButton } from "@/components/logout-button";
@@ -7,6 +8,7 @@ import { Card } from "@/components/ui/card";
 import {
   getDevices,
   getSwitchState,
+  isCamera,
   isControllableSwitch,
   type SmartThingsDevice,
 } from "@/lib/smartthings";
@@ -48,7 +50,16 @@ export default async function SmartThingsPage() {
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {devices.map((d) => (
             <Card key={d.deviceId} className="flex flex-col gap-1 p-5">
-              <p className="truncate font-semibold">{d.label || d.name}</p>
+              {isCamera(d) ? (
+                <Link
+                  href={`/smartthings/${d.deviceId}`}
+                  className="truncate font-semibold hover:underline"
+                >
+                  {d.label || d.name} →
+                </Link>
+              ) : (
+                <p className="truncate font-semibold">{d.label || d.name}</p>
+              )}
               <p className="truncate text-sm text-muted-foreground">
                 {[d.manufacturerName, d.deviceTypeName ?? d.name]
                   .filter(Boolean)

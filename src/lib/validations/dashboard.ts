@@ -12,10 +12,13 @@ export type GroupNameValues = z.infer<typeof groupNameSchema>;
 
 export const groupIdSchema = z.coerce.number().int().positive();
 
-// Matter node id는 숫자 문자열, SmartThings deviceId는 UUID
+// Matter node id는 숫자 문자열. SmartThings deviceId는 8-4-4-4-12 hex인데 Samsung OCF 가전은
+// RFC-4122 버전/변형 비트가 맞지 않아 z.uuid()에 걸리므로 형태만 검사하는 z.guid()를 쓴다.
+export const smartThingsDeviceIdSchema = z.guid();
+
 export const dashboardItemKeySchema = z.discriminatedUnion("source", [
   z.object({ source: z.literal("matter"), deviceId: z.string().regex(/^\d{1,20}$/) }),
-  z.object({ source: z.literal("smartthings"), deviceId: z.uuid() }),
+  z.object({ source: z.literal("smartthings"), deviceId: smartThingsDeviceIdSchema }),
 ]);
 
 export const dashboardItemBodySchema = z.object({

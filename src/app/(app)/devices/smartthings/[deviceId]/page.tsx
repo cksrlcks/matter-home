@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { connection } from "next/server";
-import { z } from "zod";
 
 import { LivePlayer } from "@/components/live-player";
 import { SmartThingsSwitch } from "@/components/smartthings-switch";
@@ -13,6 +12,7 @@ import {
   isCamera,
   type CameraStatus,
 } from "@/lib/smartthings";
+import { smartThingsDeviceIdSchema } from "@/lib/validations/dashboard";
 
 // 상태 조회 실패(429 등) 시 화면은 그대로 두고 값만 비운다. 실시간 영상은 go2rtc가 따로 받는다.
 const EMPTY_STATUS: CameraStatus = {
@@ -35,7 +35,7 @@ export default async function CameraPage({
 }) {
   await connection();
   const { deviceId } = await params;
-  if (!z.uuid().safeParse(deviceId).success) notFound();
+  if (!smartThingsDeviceIdSchema.safeParse(deviceId).success) notFound();
 
   // 404/403만 "없는 기기"로 본다. 한도 초과 등 다른 오류는 그대로 오류 화면으로.
   const device = await getDevice(deviceId).catch((e: { status?: number }) => {

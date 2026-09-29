@@ -1,8 +1,8 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { z } from "zod";
 
 import { getSession } from "@/lib/auth/session";
 import { fetchCameraMedia } from "@/lib/smartthings";
+import { smartThingsDeviceIdSchema } from "@/lib/validations/dashboard";
 
 export const dynamic = "force-dynamic";
 
@@ -18,7 +18,10 @@ export async function GET(
 
   const { deviceId } = await params;
   const type = request.nextUrl.searchParams.get("type");
-  if (!z.uuid().safeParse(deviceId).success || (type !== "image" && type !== "clip")) {
+  if (
+    !smartThingsDeviceIdSchema.safeParse(deviceId).success ||
+    (type !== "image" && type !== "clip")
+  ) {
     return NextResponse.json({ message: "잘못된 요청입니다." }, { status: 400 });
   }
 

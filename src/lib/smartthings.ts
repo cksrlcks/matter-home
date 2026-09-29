@@ -80,7 +80,7 @@ export type CameraStatus = {
   sound: Attr<string>;
 };
 
-export async function getCameraStatus(deviceId: string): Promise<CameraStatus> {
+async function fetchCameraStatus(deviceId: string): Promise<CameraStatus> {
   const { components } = await stFetch<{
     components: { main: Record<string, Record<string, Attr<unknown>>> };
   }>(`/devices/${encodeURIComponent(deviceId)}/status`);
@@ -98,6 +98,23 @@ export async function getCameraStatus(deviceId: string): Promise<CameraStatus> {
   };
 }
 
+// 기기 상태 조회는 기기당 1분 10회로 제한된다(초과 시 429).
+// 상세 화면 한 번에 화면/스냅샷/클립이 각각 조회하므로 10초간 결과를 재사용한다.
+// ponytail: 프로세스 메모리 캐시, 인스턴스가 여러 개면 공유되지 않음
+const STATUS_TTL_MS = 10_000;
+const statusCache = new Map<string, { at: number; value: Promise<CameraStatus> }>();
+
+export function getCameraStatus(deviceId: string): Promise<CameraStatus> {
+  const hit = statusCache.get(deviceId);
+  if (hit && Date.now() - hit.at < STATUS_TTL_MS) return hit.value;
+
+  const value = fetchCameraStatus(deviceId);
+  statusCache.set(deviceId, { at: Date.now(), value });
+  // 실패(429 등)는 캐시하지 않는다.
+  value.catch(() => statusCache.delete(deviceId));
+  return value;
+}
+
 async function assertCamera(deviceId: string) {
   if (!isCamera(await getDevice(deviceId))) {
     throw new Error("카메라가 아닙니다.");
@@ -105,13 +122,19 @@ async function assertCamera(deviceId: string) {
 }
 
 // 새 스냅샷을 찍고, 이미지가 바뀔 때까지 기다린다. (실측 약 4초)
+// 조회 한도 때문에 3초 간격으로 최대 5번만 확인한다.
 export async function takeSnapshot(deviceId: string): Promise<boolean> {
   await assertCamera(deviceId);
   const before = (await getCameraStatus(deviceId)).captureTime;
   await sendCommand(deviceId, "imageCapture", "take");
-  for (let i = 0; i < 10; i++) {
-    await new Promise((r) => setTimeout(r, 1500));
-    if ((await getCameraStatus(deviceId)).captureTime !== before) return true;
+  for (let i = 0; i < 5; i++) {
+    await new Promise((r) => setTimeout(r, 3000));
+    const status = await fetchCameraStatus(deviceId);
+    if (status.captureTime !== before) {
+      // 새로고침된 화면이 새 이미지를 보도록 캐시를 갱신한다.
+      statusCache.set(deviceId, { at: Date.now(), value: Promise.resolve(status) });
+      return true;
+    }
   }
   return false;
 }

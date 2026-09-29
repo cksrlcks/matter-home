@@ -4,8 +4,6 @@ import { connection } from "next/server";
 import { z } from "zod";
 
 import { LivePlayer } from "@/components/live-player";
-import { LogoutButton } from "@/components/logout-button";
-import { NavTabs } from "@/components/nav-tabs";
 import { SmartThingsSwitch } from "@/components/smartthings-switch";
 import { SnapshotButton } from "@/components/snapshot-button";
 import { Card } from "@/components/ui/card";
@@ -50,18 +48,9 @@ export default async function CameraPage({
   const media = `/api/smartthings/cameras/${deviceId}/media`;
 
   return (
-    <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-6 sm:py-10">
-      <header className="mb-6 flex items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Matter Home</h1>
-          <p className="text-sm text-muted-foreground">스마트홈 기기 관리</p>
-        </div>
-        <LogoutButton />
-      </header>
-      <NavTabs active="/smartthings" />
-
+    <>
       <Link
-        href="/smartthings"
+        href="/devices/smartthings"
         className="mb-4 inline-block text-sm text-muted-foreground hover:underline"
       >
         ← 목록
@@ -155,6 +144,6 @@ export default async function CameraPage({
           )}
         </div>
       </div>
-    </main>
+    </>
   );
 }

@@ -1,0 +1,558 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Matter Home 컴포넌트 가이드</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css">
+<style>
+  :root{
+    --color-primary:#202327; --color-primary-strong:#0D0F11; --color-secondary:#1B2F5E;
+    --color-bg:#F4F5F2; --color-bg-soft:#EAECE7; --color-surface:#FFFFFF;
+    --color-text:#1A1C1E; --color-muted:#5F6773; --color-border:#E1E4DF;
+    --color-success:#15803D; --color-warning:#DC6803; --color-danger:#DC2626; --color-info:#2563EB;
+    --color-accent-soft:#E6ECF7;
+    --font-sans:"Pretendard",-apple-system,BlinkMacSystemFont,system-ui,sans-serif;
+    --text-xs:12px; --text-sm:14px; --text-base:16px; --text-lg:18px; --text-xl:20px;
+    --text-2xl:26px; --text-3xl:32px; --text-4xl:44px;
+    --leading-tight:1.15; --leading-normal:1.5; --leading-relaxed:1.7;
+    --weight-regular:400; --weight-medium:500; --weight-semibold:600; --weight-bold:700;
+    --space-xs:4px; --space-sm:8px; --space-md:12px; --space-lg:16px; --space-xl:24px; --space-2xl:40px;
+    --radius-sm:8px; --radius-md:12px; --radius-lg:16px; --radius-full:999px;
+    --shadow-sm:0 1px 2px rgba(26,28,30,.05); --shadow-md:0 4px 14px rgba(26,28,30,.07);
+    --shadow-lg:0 14px 36px rgba(26,28,30,.12);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:var(--font-sans);color:var(--color-text);background:var(--color-bg);
+    -webkit-font-smoothing:antialiased;line-height:var(--leading-normal)}
+  .inner{max-width:1080px;margin:0 auto;padding:48px 24px 96px}
+  h1{font-size:var(--text-3xl);font-weight:var(--weight-bold);letter-spacing:-.02em;line-height:var(--leading-tight);margin:0 0 8px}
+  h2{font-size:var(--text-xl);font-weight:var(--weight-bold);letter-spacing:-.01em;margin:56px 0 4px}
+  h3{font-size:var(--text-sm);font-weight:var(--weight-semibold);color:var(--color-muted);margin:20px 0 8px}
+  .eyebrow{display:block;font-size:11px;font-weight:var(--weight-semibold);letter-spacing:.08em;text-transform:uppercase;color:var(--color-muted);margin-bottom:6px}
+  .lead{margin:0 0 4px;color:var(--color-muted)}
+  .desc{margin:0 0 16px;color:var(--color-muted);font-size:var(--text-sm)}
+  code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px}
+  svg{flex:none}
+
+  .demo{display:flex;flex-wrap:wrap;gap:12px;align-items:center;padding:24px;background:var(--color-surface);
+    border:1px solid var(--color-border);border-radius:var(--radius-lg)}
+  .demo--bg{background:var(--color-bg)}
+  .demo--grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));align-items:stretch}
+  .demo--col{flex-direction:column;align-items:stretch}
+  .label{display:flex;flex-direction:column;gap:8px;align-items:flex-start}
+  .label > small{font-size:11px;color:var(--color-muted);font-variant-numeric:tabular-nums}
+  .rules{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px;font-size:var(--text-sm);line-height:1.55}
+  .rules > div{padding:12px 16px;border-radius:var(--radius-md);background:var(--color-bg-soft)}
+  .rules b{display:block;margin-bottom:2px;font-weight:var(--weight-semibold)}
+  .rules .do b{color:var(--color-success)} .rules .dont b{color:var(--color-danger)}
+
+  /* ── 버튼 ── */
+  .btn{display:inline-flex;align-items:center;justify-content:center;line-height:1;gap:8px;height:40px;padding:0 16px;
+    border-radius:var(--radius-md);border:1px solid transparent;font:inherit;font-size:var(--text-sm);
+    font-weight:var(--weight-semibold);color:var(--color-text);background:transparent;cursor:pointer;white-space:nowrap;
+    transition:background .15s,color .15s,box-shadow .15s}
+  .btn--primary{background:var(--color-primary);color:#fff}
+  .btn--primary:hover,.btn--primary.is-hover{background:var(--color-primary-strong)}
+  .btn--secondary{background:var(--color-surface);border-color:var(--color-border)}
+  .btn--secondary:hover,.btn--secondary.is-hover{background:var(--color-bg-soft)}
+  .btn--ghost{color:var(--color-muted)}
+  .btn--ghost:hover,.btn--ghost.is-hover{background:var(--color-bg-soft);color:var(--color-text)}
+  .btn--danger{background:var(--color-danger);color:#fff}
+  .btn--danger:hover,.btn--danger.is-hover{background:#B91C1C}
+  .btn:focus-visible,.btn.is-focus{outline:2px solid var(--color-info);outline-offset:2px}
+  .btn[disabled]{opacity:.45;cursor:not-allowed}
+  .btn--sm{height:32px;padding:0 12px;font-size:var(--text-xs);border-radius:var(--radius-sm)}
+  .btn--icon{width:40px;padding:0}
+  .btn--icon.btn--sm{width:32px}
+
+  /* ── 토글 · 전원 · 슬라이더 ── */
+  .switch{position:relative;display:inline-flex;align-items:center;width:52px;height:30px;border-radius:var(--radius-full);
+    background:#C9CEC7;border:0;padding:0;cursor:pointer;transition:background .2s}
+  .switch::after{content:"";position:absolute;left:3px;top:3px;width:24px;height:24px;border-radius:50%;background:#fff;
+    box-shadow:0 1px 3px rgba(0,0,0,.25);transition:transform .2s}
+  .switch[aria-checked="true"]{background:var(--color-secondary)}
+  .switch[aria-checked="true"]::after{transform:translateX(22px)}
+  .switch:hover,.switch.is-hover{filter:brightness(.95)}
+  .switch:focus-visible,.switch.is-focus{outline:2px solid var(--color-info);outline-offset:2px}
+  .switch[disabled]{opacity:.45;cursor:not-allowed}
+  .switch--lg{width:64px;height:36px}
+  .switch--lg::after{width:30px;height:30px}
+  .switch--lg[aria-checked="true"]::after{transform:translateX(28px)}
+
+  .power{display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;border-radius:50%;
+    border:1px solid var(--color-border);background:var(--color-surface);color:var(--color-muted);cursor:pointer;padding:0;transition:all .15s}
+  .power:hover,.power.is-hover{border-color:var(--color-primary);color:var(--color-text)}
+  .power--on{background:var(--color-primary);border-color:var(--color-primary);color:#fff}
+  .power--on:hover,.power--on.is-hover{background:var(--color-primary-strong);border-color:var(--color-primary-strong);color:#fff}
+  .power:focus-visible,.power.is-focus{outline:2px solid var(--color-info);outline-offset:2px}
+  .power[disabled]{opacity:.45;cursor:not-allowed}
+
+  .slider-wrap{display:flex;flex-direction:column;gap:8px;min-width:240px}
+  .slider-wrap .row{display:flex;justify-content:space-between;font-size:var(--text-sm)}
+  .slider-wrap .row b{font-variant-numeric:tabular-nums}
+  .slider{-webkit-appearance:none;appearance:none;width:100%;height:8px;margin:8px 0;border-radius:var(--radius-full);outline:none;
+    background:linear-gradient(to right,var(--color-secondary) 0 var(--p,60%),#C9CEC7 var(--p,60%) 100%)}
+  .slider::-webkit-slider-thumb{-webkit-appearance:none;width:24px;height:24px;border-radius:50%;background:#fff;
+    border:2px solid var(--color-primary);box-shadow:var(--shadow-sm);cursor:pointer}
+  .slider::-moz-range-thumb{width:20px;height:20px;border-radius:50%;background:#fff;border:2px solid var(--color-primary);cursor:pointer}
+  .slider:focus-visible{outline:2px solid var(--color-info);outline-offset:4px}
+  .slider[disabled]{opacity:.45}
+
+  /* ── 디바이스 타일 ── */
+  .tile{position:relative;display:flex;flex-direction:column;gap:12px;min-height:160px;padding:16px;border-radius:var(--radius-lg);
+    background:var(--color-surface);border:1px solid var(--color-border);transition:box-shadow .15s,transform .15s}
+  .tile:hover,.tile.is-hover{box-shadow:var(--shadow-md);transform:translateY(-1px)}
+  .tile--on{background:var(--color-accent-soft);border-color:var(--color-secondary)}
+  .tile--offline{border-style:dashed}
+  .tile--offline .tile__icon,.tile--offline .tile__name{color:var(--color-muted)}
+  .tile--error{border-style:dashed;align-items:center;justify-content:center;text-align:center;color:var(--color-muted);font-size:var(--text-sm)}
+  .tile__head{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+  .tile__icon{width:40px;height:40px;border-radius:var(--radius-sm);display:inline-flex;align-items:center;justify-content:center;
+    background:var(--color-bg-soft);color:var(--color-text)}
+  .tile--on .tile__icon{background:var(--color-secondary);color:#fff}
+  .tile__body{min-width:0;margin-top:auto}
+  .tile__name{font-weight:var(--weight-semibold);font-size:var(--text-base);margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .tile__sub{margin:2px 0 0;font-size:var(--text-sm);color:var(--color-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .tile__value{display:flex;align-items:baseline;gap:4px;margin-top:8px;font-size:var(--text-2xl);font-weight:var(--weight-bold);
+    letter-spacing:-.02em;line-height:1;font-variant-numeric:tabular-nums}
+  .tile__value small{font-size:var(--text-sm);font-weight:var(--weight-medium);color:var(--color-muted);letter-spacing:0}
+  .tile__foot{display:flex;align-items:center;gap:8px;flex-wrap:wrap;border-top:1px solid var(--color-border);padding-top:12px}
+  .tile--on .tile__foot{border-top-color:color-mix(in srgb,var(--color-secondary) 30%,transparent)}
+  .tile__media{position:relative;aspect-ratio:16/9;margin:-16px -16px 0;border-radius:var(--radius-lg) var(--radius-lg) 0 0;
+    background:#0F1113 radial-gradient(ellipse at 60% 40%,#2A2F35 0,#0F1113 70%);overflow:hidden}
+  .tile__media .badge{position:absolute;left:12px;top:12px}
+  .tile--camera{gap:12px}
+  .tile--camera .tile__head{align-items:center}
+  .tile--camera .tile__body{margin-top:0}
+  .skeleton{background:linear-gradient(90deg,var(--color-bg-soft) 25%,#F3F4F1 50%,var(--color-bg-soft) 75%);
+    background-size:200% 100%;animation:sk 1.4s infinite;border-radius:var(--radius-sm);height:14px}
+  @keyframes sk{to{background-position:-200% 0}}
+
+  /* ── 내비 ── */
+  .header{display:flex;align-items:center;justify-content:space-between;gap:16px;width:100%}
+  .header .brand{display:flex;align-items:center;gap:12px}
+  .header .logo{width:36px;height:36px;border-radius:var(--radius-sm);background:var(--color-secondary);color:#fff;
+    display:inline-flex;align-items:center;justify-content:center}
+  .header h4{margin:0;font-size:var(--text-lg);font-weight:var(--weight-bold);letter-spacing:-.01em;line-height:1.2}
+  .header p{margin:0;font-size:var(--text-xs);color:var(--color-muted)}
+  .tabs{display:inline-flex;gap:4px;padding:4px;background:var(--color-bg-soft);border-radius:var(--radius-full)}
+  .tab{display:inline-flex;align-items:center;justify-content:center;line-height:1;height:36px;padding:0 18px;border-radius:var(--radius-full);
+    font-size:var(--text-sm);font-weight:var(--weight-semibold);color:var(--color-muted);text-decoration:none;transition:color .15s,background .15s}
+  .tab:hover,.tab.is-hover{color:var(--color-text)}
+  .tab--active{background:var(--color-surface);color:var(--color-text);box-shadow:var(--shadow-sm)}
+  .tab:focus-visible{outline:2px solid var(--color-info);outline-offset:2px}
+  .subtabs{display:flex;gap:2px;border-bottom:1px solid var(--color-border);width:100%}
+  .subtab{display:inline-flex;align-items:center;height:40px;padding:0 14px;margin-bottom:-1px;border-bottom:2px solid transparent;
+    font-size:var(--text-sm);font-weight:var(--weight-medium);color:var(--color-muted);text-decoration:none}
+  .subtab:hover{color:var(--color-text)}
+  .subtab--active{color:var(--color-text);border-color:var(--color-primary)}
+  .phone{width:300px;padding:0;border:1px solid var(--color-border);border-radius:24px;overflow:hidden;background:var(--color-bg)}
+  .phone .screen{height:120px;padding:16px;font-size:var(--text-sm);color:var(--color-muted)}
+  .bottom-nav{display:grid;grid-template-columns:repeat(3,1fr);background:var(--color-surface);border-top:1px solid var(--color-border);padding:8px 8px 12px}
+  .bottom-nav a{display:flex;flex-direction:column;align-items:center;gap:4px;padding:6px 0;border-radius:var(--radius-md);
+    font-size:11px;font-weight:var(--weight-semibold);color:var(--color-muted);text-decoration:none}
+  .bottom-nav a.is-active{color:var(--color-text)}
+  .bottom-nav a.is-active svg{background:var(--color-accent-soft);border-radius:var(--radius-full)}
+  .bottom-nav svg{padding:6px 14px;width:52px;height:32px}
+
+  /* ── 방 칩 ── */
+  .chips{display:flex;gap:8px;flex-wrap:wrap;width:100%}
+  .chip{display:inline-flex;align-items:center;justify-content:center;line-height:1;gap:6px;height:36px;padding:0 14px;
+    border-radius:var(--radius-full);border:1px solid var(--color-border);background:var(--color-surface);font:inherit;
+    font-size:var(--text-sm);font-weight:var(--weight-medium);color:var(--color-text);cursor:pointer;transition:background .15s}
+  .chip:hover,.chip.is-hover{background:var(--color-bg-soft)}
+  .chip--active{background:var(--color-primary);border-color:var(--color-primary);color:#fff}
+  .chip--active:hover,.chip--active.is-hover{background:var(--color-primary-strong)}
+  .chip:focus-visible,.chip.is-focus{outline:2px solid var(--color-info);outline-offset:2px}
+  .chip[disabled]{opacity:.45;cursor:not-allowed}
+  .chip__count{font-size:11px;opacity:.65;font-variant-numeric:tabular-nums}
+  .chip--add{border-style:dashed;color:var(--color-muted)}
+
+  /* ── 뱃지 ── */
+  .badge{display:inline-flex;align-items:center;justify-content:center;line-height:1;gap:6px;height:24px;padding:0 10px;
+    border-radius:var(--radius-full);font-size:var(--text-xs);font-weight:var(--weight-medium);background:var(--color-bg-soft);color:var(--color-muted)}
+  .badge::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor;flex:none}
+  .badge--online{background:color-mix(in srgb,var(--color-success) 14%,var(--color-surface));color:var(--color-success)}
+  .badge--live{background:color-mix(in srgb,var(--color-danger) 12%,var(--color-surface));color:var(--color-danger)}
+  .badge--warn{background:color-mix(in srgb,var(--color-warning) 14%,var(--color-surface));color:var(--color-warning)}
+  .badge--info{background:color-mix(in srgb,var(--color-info) 12%,var(--color-surface));color:var(--color-info)}
+  .badge--on{background:var(--color-accent-soft);color:var(--color-text)}
+  .badge--on::before{background:var(--color-secondary)}
+  .badge--plain::before{display:none}
+
+  /* ── 스탯 ── */
+  .stat{display:flex;flex-direction:column;gap:6px;min-width:160px}
+  .stat__value{font-size:var(--text-4xl);font-weight:var(--weight-bold);letter-spacing:-.03em;line-height:1;font-variant-numeric:tabular-nums;margin:0}
+  .stat__value small{font-size:var(--text-lg);font-weight:var(--weight-medium);color:var(--color-muted);letter-spacing:0;margin-left:4px}
+  .stat__delta{font-size:var(--text-xs);color:var(--color-success);font-weight:var(--weight-medium)}
+  .summary{display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr;gap:12px;width:100%;padding:20px 24px;background:var(--color-surface);
+    border:1px solid var(--color-border);border-radius:var(--radius-lg)}
+  .summary .stat{min-width:0}
+  .summary .stat + .stat{padding-left:16px;border-left:1px solid var(--color-border)}
+  .summary .stat + .stat .stat__value{font-size:var(--text-2xl);letter-spacing:-.02em}
+  .summary .stat + .stat .stat__value small{font-size:var(--text-sm)}
+  .stat-row{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;width:100%;padding:12px 16px;border-radius:var(--radius-md);background:var(--color-bg-soft)}
+  .stat-row .k{margin:0;font-size:var(--text-xs);color:var(--color-muted)}
+  .stat-row .v{margin:2px 0 0;font-size:var(--text-sm);font-weight:var(--weight-semibold);font-variant-numeric:tabular-nums}
+
+  /* ── 폼 ── */
+  .field{display:flex;flex-direction:column;gap:6px;width:280px;max-width:100%}
+  .field > label{font-size:var(--text-sm);font-weight:var(--weight-medium)}
+  .input{height:42px;padding:0 14px;border:1px solid var(--color-border);border-radius:var(--radius-md);background:var(--color-surface);
+    font:inherit;font-size:var(--text-base);color:var(--color-text);outline:none;width:100%;transition:border-color .15s,box-shadow .15s}
+  .input::placeholder{color:#9AA1A9}
+  .input:hover,.input.is-hover{border-color:#B9BFB7}
+  .input:focus,.input.is-focus{border-color:var(--color-primary);box-shadow:0 0 0 3px color-mix(in srgb,var(--color-primary) 12%,transparent)}
+  .input[aria-invalid="true"]{border-color:var(--color-danger)}
+  .input[aria-invalid="true"]:focus{box-shadow:0 0 0 3px color-mix(in srgb,var(--color-danger) 15%,transparent)}
+  .input[disabled]{background:var(--color-bg-soft);color:var(--color-muted);cursor:not-allowed}
+  .field__hint{font-size:var(--text-xs);color:var(--color-muted)}
+  .field__error{font-size:var(--text-xs);color:var(--color-danger)}
+  .input-row{display:flex;gap:8px;width:100%}
+  .input-row .input{flex:1}
+  .check{display:inline-flex;align-items:center;gap:10px;font-size:var(--text-sm);cursor:pointer}
+  .check input{appearance:none;width:20px;height:20px;margin:0;border:1.5px solid #B9BFB7;border-radius:6px;background:var(--color-surface);display:grid;place-content:center}
+  .check input:checked{background:var(--color-primary);border-color:var(--color-primary)}
+  .check input:checked::before{content:"";width:10px;height:6px;border:2px solid #fff;border-top:0;border-right:0;transform:translateY(-1px) rotate(-45deg)}
+  .check input:focus-visible{outline:2px solid var(--color-info);outline-offset:2px}
+
+  /* ── 다이얼로그 ── */
+  .overlay{position:relative;width:100%;min-height:280px;background:rgba(26,28,30,.5);border-radius:var(--radius-lg);
+    display:flex;align-items:center;justify-content:center;padding:24px}
+  .dialog{width:100%;max-width:400px;background:var(--color-surface);border-radius:var(--radius-lg);padding:24px;box-shadow:var(--shadow-lg)}
+  .dialog h5{margin:0 0 6px;font-size:var(--text-lg);font-weight:var(--weight-bold);letter-spacing:-.01em}
+  .dialog p{margin:0 0 20px;color:var(--color-muted);font-size:var(--text-sm)}
+  .dialog__actions{display:flex;justify-content:flex-end;gap:8px}
+
+  /* ── 기타 ── */
+  .empty{width:100%;padding:40px 24px;text-align:center;border:1px dashed var(--color-border);border-radius:var(--radius-lg);color:var(--color-muted);font-size:var(--text-sm)}
+  .empty b{display:block;color:var(--color-text);font-size:var(--text-base);margin-bottom:4px}
+  .empty a{color:var(--color-text);font-weight:var(--weight-semibold);text-decoration:underline;text-underline-offset:3px}
+  .section-title{display:flex;align-items:baseline;gap:8px;margin:0;font-size:var(--text-xl);font-weight:var(--weight-bold);letter-spacing:-.01em}
+  .section-title small{font-size:var(--text-sm);font-weight:var(--weight-medium);color:var(--color-muted)}
+  .live{width:100%;max-width:560px;min-width:0}
+  .live__view{position:relative;aspect-ratio:16/9;border-radius:var(--radius-lg);overflow:hidden;
+    background:#0F1113 radial-gradient(ellipse at 50% 45%,#2A2F35 0,#0F1113 70%)}
+  .live__view .badge{position:absolute;left:12px;top:12px}
+  .live__view .center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:#fff;font-size:var(--text-sm)}
+  .live__actions{display:flex;gap:8px;margin-top:12px}
+
+  @media (max-width:640px){
+    .rules{grid-template-columns:1fr}
+    .summary{grid-template-columns:1fr 1fr}
+    .inner{padding:32px 16px 64px}
+  }
+</style>
+</head>
+<body>
+  <div class="inner">
+    <span class="eyebrow">Matter Home · Design System · user</span>
+    <h1>컴포넌트 가이드</h1>
+    <p class="lead">개인 홈 컨트롤 앱 — 디바이스 타일, 제어 컨트롤, 내비, 뱃지·스탯, 폼, 다이얼로그.</p>
+    <p class="desc">모든 상태(기본 · hover · focus · disabled)를 정적으로 렌더링했다. <code>.is-hover</code>, <code>.is-focus</code>는 가이드 표시용.</p>
+
+    <!-- ───────── 디바이스 타일 ───────── -->
+    <h2>디바이스 타일</h2>
+    <p class="desc">메인·기기관리의 핵심 단위. 색이 곧 상태 — 켜짐만 네이비 틴트. 우상단 코너에 전원 버튼(SmartThings식). 수치가 있는 기기는 하단에 크게. 하단 행에는 메인 표시 버튼(기기관리)과, 카메라라면 맨 오른쪽 chevron 버튼(상세 이동)이 놓인다. 목록에서 미리보기는 없다.</p>
+    <div class="demo demo--grid demo--bg">
+      <div class="tile tile--on">
+        <div class="tile__head">
+          <span class="tile__icon"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 2v6M15 2v6M6 8h12l-1 5a5 5 0 0 1-10 0z"/><path d="M12 18v4"/></svg></span>
+          <button class="power power--on" aria-label="끄기"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 3v9"/><path d="M6.3 6.3a8 8 0 1 0 11.4 0"/></svg></button>
+        </div>
+        <div class="tile__body">
+          <p class="tile__name">거실 스마트플러그</p>
+          <p class="tile__sub">켜짐 · Matter · 온라인</p>
+          <p class="tile__value">128<small>W</small></p>
+        </div>
+      </div>
+      <div class="tile">
+        <div class="tile__head">
+          <span class="tile__icon"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 22h4M8.5 14.5A6 6 0 1 1 15.5 14.5c-.7.7-1 1.5-1 2.5h-5c0-1-.3-1.8-1-2.5z"/></svg></span>
+          <button class="power" aria-label="켜기"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 3v9"/><path d="M6.3 6.3a8 8 0 1 0 11.4 0"/></svg></button>
+        </div>
+        <div class="tile__body">
+          <p class="tile__name">서재 조명</p>
+          <p class="tile__sub">꺼짐 · SmartThings</p>
+        </div>
+      </div>
+      <div class="tile tile--offline">
+        <div class="tile__head">
+          <span class="tile__icon"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 2v6M15 2v6M6 8h12l-1 5a5 5 0 0 1-10 0z"/><path d="M12 18v4"/></svg></span>
+          <button class="power" disabled aria-label="오프라인"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 3v9"/><path d="M6.3 6.3a8 8 0 1 0 11.4 0"/></svg></button>
+        </div>
+        <div class="tile__body">
+          <p class="tile__name">주방 플러그</p>
+          <p class="tile__sub"><span class="badge">Offline</span></p>
+        </div>
+      </div>
+      <div class="tile">
+        <div class="tile__head">
+          <span class="tile__icon"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="13" height="10" rx="2"/><path d="M16 10l5-3v10l-5-3z"/></svg></span>
+        </div>
+        <div class="tile__body">
+          <p class="tile__name">현관 카메라</p>
+          <p class="tile__sub">SmartThings · 카메라</p>
+        </div>
+        <div class="tile__foot">
+          <button class="btn btn--secondary btn--sm">☆ 메인에 표시</button>
+          <a href="#" class="btn btn--secondary btn--sm btn--icon" aria-label="상세 보기" style="margin-left:auto"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></a>
+        </div>
+      </div>
+      <div class="tile tile--error">
+        <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v4M12 16h.01"/></svg>
+        <p style="margin:0">SmartThings에서 찾을 수 없는 기기입니다.</p>
+        <button class="btn btn--secondary btn--sm">메인에서 제외</button>
+      </div>
+      <div class="tile" aria-busy="true">
+        <div class="tile__head"><span class="skeleton" style="width:40px;height:40px"></span><span class="skeleton" style="width:40px;height:40px;border-radius:50%"></span></div>
+        <div class="tile__body"><span class="skeleton" style="width:60%;display:block"></span><span class="skeleton" style="width:40%;display:block;margin-top:8px;height:10px"></span></div>
+      </div>
+    </div>
+    <h3>Hover</h3>
+    <div class="demo demo--grid demo--bg">
+      <div class="tile tile--on is-hover">
+        <div class="tile__head">
+          <span class="tile__icon"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 22h4M8.5 14.5A6 6 0 1 1 15.5 14.5c-.7.7-1 1.5-1 2.5h-5c0-1-.3-1.8-1-2.5z"/></svg></span>
+          <button class="power power--on is-hover" aria-label="끄기"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 3v9"/><path d="M6.3 6.3a8 8 0 1 0 11.4 0"/></svg></button>
+        </div>
+        <div class="tile__body"><p class="tile__name">거실 조명</p><p class="tile__sub">켜짐 · 밝기 60%</p></div>
+      </div>
+    </div>
+    <div class="rules">
+      <div class="do"><b>Do</b>켜짐 여부는 배경색으로, 온라인 여부는 뱃지/점선으로 분리해 표현한다. 이름은 한 줄 말줄임.</div>
+      <div class="dont"><b>Don't</b>꺼진 타일에 색을 주지 않는다. 타일 안에 버튼을 3개 이상 두지 않는다(전원 + 보조 1개까지).</div>
+    </div>
+
+    <!-- ───────── 카메라 상세 ───────── -->
+    <h2>카메라 라이브 뷰</h2>
+    <p class="desc">상세 페이지 상단. 16:9 검정 뷰 + LIVE 뱃지, 하단에 액션 2개(스냅샷 · 다시 시도). Tesla Live Camera 참조.</p>
+    <div class="demo demo--bg">
+      <div class="live">
+        <div class="live__view">
+          <span class="badge badge--live">LIVE</span>
+          <div class="center"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 3v6h-6"/></svg>카메라 연결 중… (최대 15초)</div>
+        </div>
+        <div class="live__actions">
+          <button class="btn btn--primary"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M4 7h3l2-3h6l2 3h3v12H4z"/><circle cx="12" cy="13" r="3"/></svg>스냅샷</button>
+          <button class="btn btn--secondary"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 3v6h-6"/></svg>다시 시도</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ───────── 버튼 ───────── -->
+    <h2>버튼</h2>
+    <p class="desc">잉크 primary 하나. 화면당 primary 1개, 나머지는 secondary/ghost. 높이 40(기본) · 32(sm). 파괴적 액션만 danger.</p>
+    <h3>변형</h3>
+    <div class="demo">
+      <button class="btn btn--primary">기기 추가</button>
+      <button class="btn btn--secondary">메인에서 제외</button>
+      <button class="btn btn--ghost">취소</button>
+      <button class="btn btn--danger">삭제</button>
+      <button class="btn btn--primary btn--sm">저장</button>
+      <button class="btn btn--secondary btn--sm">보기 →</button>
+      <button class="btn btn--secondary btn--icon" aria-label="새로고침"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 3v6h-6"/></svg></button>
+      <button class="btn btn--ghost btn--icon btn--sm" aria-label="이름 변경"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg></button>
+    </div>
+    <h3>상태 (primary · secondary)</h3>
+    <div class="demo">
+      <div class="label"><button class="btn btn--primary">기본</button><small>default</small></div>
+      <div class="label"><button class="btn btn--primary is-hover">Hover</button><small>:hover → primary-strong</small></div>
+      <div class="label"><button class="btn btn--primary is-focus">Focus</button><small>:focus-visible 2px info 링</small></div>
+      <div class="label"><button class="btn btn--primary" disabled>비활성</button><small>opacity .45</small></div>
+      <div class="label"><button class="btn btn--secondary">기본</button><small>default</small></div>
+      <div class="label"><button class="btn btn--secondary is-hover">Hover</button><small>bg-soft</small></div>
+      <div class="label"><button class="btn btn--secondary is-focus">Focus</button><small>info 링</small></div>
+      <div class="label"><button class="btn btn--secondary" disabled>비활성</button><small>opacity .45</small></div>
+    </div>
+    <div class="rules">
+      <div class="do"><b>Do</b>아이콘+텍스트는 gap 8, 아이콘 16px. 로딩 중엔 텍스트 유지 + 스피너로 아이콘 교체.</div>
+      <div class="dont"><b>Don't</b>네이비(secondary 색)를 버튼 배경으로 쓰지 않는다 — 네이비는 “켜짐·활성” 전용, 버튼은 잉크. 그라데이션·글로우 금지.</div>
+    </div>
+
+    <!-- ───────── 토글 · 슬라이더 ───────── -->
+    <h2>토글 · 전원 버튼 · 슬라이더</h2>
+    <p class="desc">토글 on = 네이비. 전원 버튼은 타일 코너용(on = 잉크 채움). 슬라이더는 밝기·레벨 제어, 채움 색 네이비.</p>
+    <h3>토글 스위치</h3>
+    <div class="demo">
+      <div class="label"><button class="switch" role="switch" aria-checked="true" aria-label="켜짐"></button><small>on</small></div>
+      <div class="label"><button class="switch" role="switch" aria-checked="false" aria-label="꺼짐"></button><small>off</small></div>
+      <div class="label"><button class="switch is-hover" role="switch" aria-checked="true"></button><small>hover</small></div>
+      <div class="label"><button class="switch is-focus" role="switch" aria-checked="false"></button><small>focus</small></div>
+      <div class="label"><button class="switch" role="switch" aria-checked="true" disabled></button><small>disabled</small></div>
+      <div class="label"><button class="switch switch--lg" role="switch" aria-checked="true" aria-label="켜짐"></button><small>lg (상세 페이지)</small></div>
+    </div>
+    <h3>전원 버튼</h3>
+    <div class="demo">
+      <div class="label"><button class="power power--on" aria-label="끄기"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 3v9"/><path d="M6.3 6.3a8 8 0 1 0 11.4 0"/></svg></button><small>on</small></div>
+      <div class="label"><button class="power" aria-label="켜기"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 3v9"/><path d="M6.3 6.3a8 8 0 1 0 11.4 0"/></svg></button><small>off</small></div>
+      <div class="label"><button class="power is-hover" aria-label="켜기"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 3v9"/><path d="M6.3 6.3a8 8 0 1 0 11.4 0"/></svg></button><small>off hover</small></div>
+      <div class="label"><button class="power is-focus" aria-label="켜기"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 3v9"/><path d="M6.3 6.3a8 8 0 1 0 11.4 0"/></svg></button><small>focus</small></div>
+      <div class="label"><button class="power" disabled aria-label="오프라인"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 3v9"/><path d="M6.3 6.3a8 8 0 1 0 11.4 0"/></svg></button><small>disabled</small></div>
+    </div>
+    <h3>슬라이더</h3>
+    <div class="demo">
+      <div class="slider-wrap">
+        <div class="row"><span>밝기</span><b>60%</b></div>
+        <input class="slider" type="range" min="0" max="100" value="60" style="--p:60%" aria-label="밝기">
+      </div>
+      <div class="slider-wrap">
+        <div class="row"><span>밝기 (비활성)</span><b>—</b></div>
+        <input class="slider" type="range" min="0" max="100" value="30" style="--p:30%" disabled aria-label="밝기">
+      </div>
+    </div>
+    <div class="rules">
+      <div class="do"><b>Do</b>토글은 즉시 반영(낙관적 업데이트) 후 실패 시 되돌리고 toast.error. 터치 타깃 최소 40px.</div>
+      <div class="dont"><b>Don't</b>같은 타일에 토글과 전원 버튼을 함께 두지 않는다. 오프라인 기기의 컨트롤은 숨기지 말고 disabled.</div>
+    </div>
+
+    <!-- ───────── 내비 ───────── -->
+    <h2>내비게이션</h2>
+    <p class="desc">상단 헤더(로고 + 제목 + 로그아웃) 아래 세그먼트 탭. 2차 탭(Matter/SmartThings)은 언더라인. 모바일은 하단 탭바로 대체 가능.</p>
+    <div class="demo demo--col demo--bg">
+      <div class="header">
+        <div class="brand">
+          <span class="logo"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"><path d="M3 11l9-8 9 8v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z"/></svg></span>
+          <div><h4>Matter Home</h4><p>스마트홈 기기 관리</p></div>
+        </div>
+        <button class="btn btn--ghost btn--sm">로그아웃</button>
+      </div>
+      <nav class="tabs" aria-label="주 메뉴">
+        <a class="tab tab--active" href="#" aria-current="page">홈</a>
+        <a class="tab" href="#">기기관리</a>
+        <a class="tab is-hover" href="#">그룹관리 (hover)</a>
+      </nav>
+      <nav class="subtabs" aria-label="기기 종류">
+        <a class="subtab subtab--active" href="#" aria-current="page">Matter</a>
+        <a class="subtab" href="#">SmartThings</a>
+      </nav>
+    </div>
+    <h3>모바일 하단 탭 (선택)</h3>
+    <div class="demo demo--bg">
+      <div class="phone">
+        <div class="screen">콘텐츠 영역</div>
+        <nav class="bottom-nav">
+          <a class="is-active" href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M3 11l9-8 9 8v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z"/></svg>홈</a>
+          <a href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>기기</a>
+          <a href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"/></svg>설정</a>
+        </nav>
+      </div>
+    </div>
+
+    <!-- ───────── 방 칩 ───────── -->
+    <h2>방 · 그룹 칩</h2>
+    <p class="desc">메인 상단 필터. 활성 = 잉크 채움. 개수는 작은 숫자로. “+ 그룹”은 점선. 가로 스크롤 허용.</p>
+    <div class="demo">
+      <div class="chips">
+        <button class="chip chip--active">전체 <span class="chip__count">8</span></button>
+        <button class="chip">거실 <span class="chip__count">3</span></button>
+        <button class="chip is-hover">서재 <span class="chip__count">2</span></button>
+        <button class="chip is-focus">주방 <span class="chip__count">1</span></button>
+        <button class="chip" disabled>안방 <span class="chip__count">0</span></button>
+        <button class="chip chip--add"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>그룹</button>
+      </div>
+    </div>
+    <div class="rules">
+      <div class="do"><b>Do</b>선택 상태는 URL 쿼리(nuqs)에 저장. 칩 높이 36, 좌우 14.</div>
+      <div class="dont"><b>Don't</b>칩에 네이비를 쓰지 않는다(활성 = 잉크). 한 줄에 안 들어가도 줄바꿈 대신 가로 스크롤.</div>
+    </div>
+
+    <!-- ───────── 뱃지 ───────── -->
+    <h2>뱃지</h2>
+    <p class="desc">상태 점 + 텍스트. 높이 24, pill. 시맨틱 색 14% 틴트 배경 + 같은 색 텍스트.</p>
+    <div class="demo">
+      <span class="badge badge--online">Online</span>
+      <span class="badge">Offline</span>
+      <span class="badge badge--on">켜짐</span>
+      <span class="badge badge--live">LIVE</span>
+      <span class="badge badge--warn">응답 지연</span>
+      <span class="badge badge--info">업데이트</span>
+      <span class="badge badge--plain">Matter</span>
+      <span class="badge badge--plain">SmartThings</span>
+    </div>
+    <div class="rules">
+      <div class="do"><b>Do</b>뱃지 1개에 상태 1개. 온라인/오프라인은 항상 같은 자리에.</div>
+      <div class="dont"><b>Don't</b>뱃지를 버튼처럼 클릭 가능하게 만들지 않는다. 대문자 LIVE 외에는 영문 대문자 남발 금지.</div>
+    </div>
+
+    <!-- ───────── 스탯 ───────── -->
+    <h2>스탯 · 에너지 요약</h2>
+    <p class="desc">무브 ⑪ 적용 지점. 대표 수치 44px + eyebrow 라벨, 보조 수치는 26px. 단위는 muted로 분리. 항상 <code>tabular-nums</code>.</p>
+    <div class="demo demo--bg">
+      <div class="summary">
+        <div class="stat"><span class="eyebrow">오늘 사용량</span><p class="stat__value">3.42<small>kWh</small></p><span class="stat__delta">어제보다 −12%</span></div>
+        <div class="stat"><span class="eyebrow">현재 전력</span><p class="stat__value">128<small>W</small></p></div>
+        <div class="stat"><span class="eyebrow">이번 달</span><p class="stat__value">62.8<small>kWh</small></p></div>
+        <div class="stat"><span class="eyebrow">켜진 기기</span><p class="stat__value">3<small>/ 8</small></p></div>
+      </div>
+    </div>
+    <h3>타일 안 측정값 (전압 · 전류 · 누적)</h3>
+    <div class="demo">
+      <div class="stat-row" style="max-width:360px">
+        <div><p class="k">전압</p><p class="v">221.4 V</p></div>
+        <div><p class="k">전류</p><p class="v">0.58 A</p></div>
+        <div><p class="k">누적</p><p class="v">128.3 kWh</p></div>
+      </div>
+    </div>
+    <div class="rules">
+      <div class="do"><b>Do</b>값이 없으면 “—”. 오프라인이면 수치 영역 opacity .6.</div>
+      <div class="dont"><b>Don't</b>대형 수치를 한 화면에 2개 이상 두지 않는다(요약 1곳). 수치에 색을 입히지 않는다.</div>
+    </div>
+
+    <!-- ───────── 폼 ───────── -->
+    <h2>폼</h2>
+    <p class="desc">react-hook-form + zod. 라벨 위, 검증 문구 아래(12px danger). 인풋 높이 42, 라운드 12. 포커스 = 잉크 테두리 + 12% 링.</p>
+    <div class="demo" style="align-items:flex-start">
+      <div class="field"><label>기기 이름</label><input class="input" placeholder="예: 거실 스마트플러그"><span class="field__hint">최대 32자</span></div>
+      <div class="field"><label>Hover</label><input class="input is-hover" placeholder="마우스 오버"></div>
+      <div class="field"><label>Focus</label><input class="input is-focus" value="거실 조명"></div>
+      <div class="field"><label>오류</label><input class="input" aria-invalid="true" value=""><span class="field__error">그룹 이름을 입력해 주세요.</span></div>
+      <div class="field"><label>비활성</label><input class="input" disabled value="변경 불가"></div>
+    </div>
+    <h3>인라인 폼 · 체크</h3>
+    <div class="demo" style="align-items:flex-start">
+      <div class="field" style="width:420px">
+        <label>새 그룹</label>
+        <div class="input-row"><input class="input" placeholder="새 그룹 이름 (예: 거실)"><button class="btn btn--primary"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>추가</button></div>
+      </div>
+      <div class="field" style="width:auto;gap:12px;padding-top:26px">
+        <label class="check"><input type="checkbox" checked>메인 화면에 표시</label>
+        <label class="check"><input type="checkbox">즐겨찾기</label>
+      </div>
+    </div>
+    <div class="rules">
+      <div class="do"><b>Do</b>서버 오류는 <code>errors.root</code>로 폼 하단에. 제출 중 버튼 disabled + 스피너.</div>
+      <div class="dont"><b>Don't</b>placeholder를 라벨 대용으로 쓰지 않는다. 인풋 테두리를 없애지 않는다.</div>
+    </div>
+
+    <!-- ───────── 다이얼로그 ───────── -->
+    <h2>다이얼로그 (확인)</h2>
+    <p class="desc"><code>useConfirm</code> 훅용. 상단 X 없음 — 닫기는 하단 취소 버튼. 파괴적 액션은 danger 버튼. 라운드 16, 그림자 lg.</p>
+    <div class="demo demo--bg" style="padding:0;border:0;background:transparent">
+      <div class="overlay">
+        <div class="dialog" role="alertdialog" aria-labelledby="dlg-t">
+          <h5 id="dlg-t">'거실' 그룹을 삭제하시겠습니까?</h5>
+          <p>그룹에 속한 기기는 메인에 그대로 남고, 그룹만 해제됩니다.</p>
+          <div class="dialog__actions">
+            <button class="btn btn--ghost">취소</button>
+            <button class="btn btn--danger">삭제</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="rules">
+      <div class="do"><b>Do</b>제목은 질문형, 설명은 결과를 알려주는 한 문장. 확인 버튼 라벨은 동사(삭제·제거).</div>
+      <div class="dont"><b>Don't</b>우상단 X 아이콘 금지. 버튼 3개 이상 금지.</div>
+    </div>
+
+    <!-- ───────── 섹션 · 빈 상태 ───────── -->
+    <h2>섹션 헤더 · 빈 상태</h2>
+    <p class="desc">그룹 섹션 제목은 20px bold + 개수. 빈 상태는 점선 카드에 안내 + 링크.</p>
+    <div class="demo demo--col demo--bg">
+      <h4 class="section-title">거실 <small>3</small></h4>
+      <div class="empty"><b>메인에 표시할 기기가 없습니다</b>기기관리에서 ‘메인 표시’를 켜 주세요. <a href="#">기기관리로 이동</a></div>
+    </div>
+  </div>
+</body>
+</html>

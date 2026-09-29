@@ -1,10 +1,9 @@
 "use client";
 
-import { Loader2, Power } from "lucide-react";
 import { toast } from "sonner";
 
+import { PowerButton } from "@/components/ui/power-button";
 import { usePowerMutation } from "@/hooks/use-devices";
-import { cn } from "@/lib/utils";
 import type { DevicePowerDto } from "@/types/matter";
 
 type Props = {
@@ -13,6 +12,7 @@ type Props = {
   disabled?: boolean;
 };
 
+// Matter 기기 전원 버튼. 낙관적 업데이트·롤백은 usePowerMutation이 처리한다.
 export function PowerSwitch({ nodeId, power, disabled }: Props) {
   const mutation = usePowerMutation();
   const isOn = power.on;
@@ -33,24 +33,11 @@ export function PowerSwitch({ nodeId, power, disabled }: Props) {
   };
 
   return (
-    <button
-      type="button"
+    <PowerButton
+      on={isOn}
+      pending={isBusy}
+      disabled={disabled}
       onClick={handleToggle}
-      disabled={disabled || isBusy}
-      aria-pressed={isOn}
-      className={cn(
-        "flex w-full items-center justify-center gap-2 rounded-lg px-4 py-3 text-base font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-60",
-        isOn
-          ? "bg-primary text-primary-foreground hover:bg-primary/90"
-          : "bg-muted text-muted-foreground hover:bg-muted/80",
-      )}
-    >
-      {isBusy ? (
-        <Loader2 className="h-5 w-5 animate-spin" />
-      ) : (
-        <Power className="h-5 w-5" />
-      )}
-      {isOn ? "ON" : "OFF"}
-    </button>
+    />
   );
 }

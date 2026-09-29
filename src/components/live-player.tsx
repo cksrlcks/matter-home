@@ -116,7 +116,11 @@ export function LivePlayer({ deviceId }: { deviceId: string }) {
         setStatus("error");
       }
     });
-    ws.addEventListener("close", () => setStatus("error"));
+    // 정리(cleanup)로 닫힌 경우는 무시한다. (dev StrictMode에서 effect가 두 번 실행됨)
+    let disposed = false;
+    ws.addEventListener("close", () => {
+      if (!disposed) setStatus("error");
+    });
 
     const onPlaying = () => setStatus("playing");
     // 디코딩 오류 등으로 재생이 멈추면 다시 시도 버튼을 보여준다.
@@ -126,6 +130,7 @@ export function LivePlayer({ deviceId }: { deviceId: string }) {
     video.play().catch(() => {});
 
     return () => {
+      disposed = true;
       video.removeEventListener("playing", onPlaying);
       video.removeEventListener("error", onError);
       ws.close();

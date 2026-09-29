@@ -4,6 +4,8 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { LogOut } from "lucide-react";
 
+import { Button } from "@/components/ui/button";
+
 export function LogoutButton() {
   const router = useRouter();
   const [pending, setPending] = useState(false);
@@ -20,14 +22,9 @@ export function LogoutButton() {
   };
 
   return (
-    <button
-      type="button"
-      onClick={handleLogout}
-      disabled={pending}
-      className="inline-flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-muted disabled:opacity-60"
-    >
-      <LogOut className="h-4 w-4" />
+    <Button variant="ghost" size="sm" onClick={handleLogout} disabled={pending}>
+      <LogOut />
       로그아웃
-    </button>
+    </Button>
   );
 }

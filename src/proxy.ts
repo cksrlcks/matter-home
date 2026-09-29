@@ -39,6 +39,18 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(homeUrl);
   }
 
+  // 로컬 dev의 go2rtc 프록시(next.config rewrites)는 Host를 go2rtc 주소로 바꾸므로,
+  // go2rtc가 Origin 불일치로 WebSocket을 403 거부한다. 로그인 확인을 마친 dev 요청만 Origin을 뺀다.
+  if (
+    process.env.NODE_ENV === "development" &&
+    process.env.GO2RTC_DEV_URL &&
+    pathname.startsWith("/go2rtc/")
+  ) {
+    const headers = new Headers(request.headers);
+    headers.delete("origin");
+    return NextResponse.next({ request: { headers } });
+  }
+
   return NextResponse.next();
 }
 

@@ -1,12 +1,13 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
-import { CalendarDays, ChevronDown, Receipt, Sun, Zap } from "lucide-react";
+import { useState } from "react";
+import { ChevronDown } from "lucide-react";
 
 import { Card } from "@/components/ui/card";
+import { Stat } from "@/components/ui/stat";
 import { useDevices } from "@/hooks/use-devices";
 import { useEnergyUsage } from "@/hooks/use-energy-usage";
-import { formatKwh, formatWatts } from "@/lib/energy";
+import { formatKwh, formatWatts, splitUnit } from "@/lib/energy";
 import { cn } from "@/lib/utils";
 import type { DeviceDto, DeviceEnergyDto } from "@/types/matter";
 
@@ -55,6 +56,12 @@ export function EnergySummary({ className }: Props) {
   const usageByNode = new Map(usage?.devices.map((d) => [d.nodeId, d]));
   const price = usage?.pricePerKwh ?? 0;
 
+  // 수치와 단위를 분리해 Stat에 넘긴다. 값이 없으면 "—"
+  const NONE: [string, string] = ["—", ""];
+  const watts = splitUnit(formatWatts(totalW));
+  const today = usage ? splitUnit(formatKwh(usage.todayKwh)) : NONE;
+  const month = usage ? splitUnit(formatKwh(usage.monthKwh)) : NONE;
+
   return (
     <Card className={cn("mb-6", className)}>
       <h2>
@@ -63,14 +70,12 @@ export function EnergySummary({ className }: Props) {
           onClick={() => setOpen((prev) => !prev)}
           aria-expanded={open}
           aria-controls="energy-summary-panel"
-          className="flex w-full items-center justify-between gap-3 rounded-xl p-5 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className="flex w-full items-center justify-between gap-3 rounded-2xl p-5 text-left"
         >
           <span className="text-lg font-semibold">전력 사용량</span>
           <span className="flex min-w-0 items-center gap-3">
             <span className="truncate text-sm tabular-nums">
-              <span className="font-semibold text-primary">
-                {formatWatts(totalW)}
-              </span>
+              <span className="font-semibold">{formatWatts(totalW)}</span>
               {usage && (
                 <span className="ml-2 text-muted-foreground">
                   오늘 {formatKwh(usage.todayKwh)}
@@ -98,33 +103,33 @@ export function EnergySummary({ className }: Props) {
             </p>
           )}
 
-          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-            <Tile
-              icon={<Zap className="h-4 w-4" />}
+          {/* 대표 수치(44px)는 현재 소비전력 1곳만, 나머지는 26px */}
+          <div className="grid grid-cols-2 gap-x-3 gap-y-5 lg:grid-cols-4">
+            <Stat
               label="현재 소비전력"
-              value={formatWatts(totalW)}
-              sub={`플러그 ${activeCount} / ${metered.length}개 사용 중`}
+              value={watts[0]}
+              unit={watts[1]}
               emphasis
+              sub={`플러그 ${activeCount} / ${metered.length}개 사용 중`}
             />
-            <Tile
-              icon={<Sun className="h-4 w-4" />}
+            <Stat
               label="오늘"
-              value={usage ? formatKwh(usage.todayKwh) : "-"}
+              value={today[0]}
+              unit={today[1]}
               sub={usage ? formatWon(usage.todayKwh * price) : undefined}
             />
-            <Tile
-              icon={<CalendarDays className="h-4 w-4" />}
+            <Stat
               label="이번 달"
-              value={usage ? formatKwh(usage.monthKwh) : "-"}
+              value={month[0]}
+              unit={month[1]}
               sub={usage ? formatWon(usage.monthKwh * price) : undefined}
             />
-            <Tile
-              icon={<Receipt className="h-4 w-4" />}
+            <Stat
               label="이번 달 예상"
               value={
                 usage?.projectedMonthKwh != null
                   ? formatWon(usage.projectedMonthKwh * price)
-                  : "-"
+                  : "—"
               }
               sub={
                 usage?.projectedMonthKwh != null
@@ -191,34 +196,3 @@ export function EnergySummary({ className }: Props) {
   );
 }
 
-type TileProps = {
-  icon: ReactNode;
-  label: string;
-  value: string;
-  sub?: string;
-  emphasis?: boolean;
-};
-
-function Tile({ icon, label, value, sub, emphasis }: TileProps) {
-  return (
-    <div className="min-w-0 rounded-lg bg-muted px-4 py-3">
-      <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
-        {icon}
-        {label}
-      </p>
-      <p
-        className={cn(
-          "mt-1 truncate font-bold tabular-nums",
-          emphasis ? "text-2xl text-primary" : "text-xl",
-        )}
-      >
-        {value}
-      </p>
-      {sub && (
-        <p className="mt-0.5 truncate text-xs text-muted-foreground tabular-nums">
-          {sub}
-        </p>
-      )}
-    </div>
-  );
-}

@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 import { toast } from "sonner";
 
-import { takeSnapshotAction } from "@/app/smartthings/actions";
+import { takeSnapshotAction } from "@/app/(app)/devices/smartthings/actions";
 import { Button } from "@/components/ui/button";
 
 export function SnapshotButton({ deviceId }: { deviceId: string }) {

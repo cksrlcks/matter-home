@@ -2,6 +2,7 @@ import * as React from "react";
 
 import { cn } from "@/lib/utils";
 
+// 기본 상태는 그림자 없이 1px 선 + 배경 톤(오프화이트 ↔ 순백)으로만 구분한다.
 export function Card({
   className,
   ...props
@@ -9,7 +10,7 @@ export function Card({
   return (
     <div
       className={cn(
-        "rounded-xl border border-border bg-card text-card-foreground shadow-sm",
+        "rounded-2xl border border-border bg-card text-card-foreground",
         className,
       )}
       {...props}

@@ -1,24 +1,29 @@
 "use client";
 
-import { Loader2, Power } from "lucide-react";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
 
-import { setSwitchAction } from "@/app/smartthings/actions";
-import { cn } from "@/lib/utils";
+import { setSwitchAction } from "@/app/(app)/devices/smartthings/actions";
+import { PowerButton } from "@/components/ui/power-button";
+import { Switch } from "@/components/ui/switch";
 
 type Props = {
   deviceId: string;
   // null이면 상태를 알 수 없음(오프라인 등)
   initialOn: boolean | null;
+  /** power = 타일 코너 원형 버튼(기본), switch = 상세 페이지용 큰 토글 */
+  appearance?: "power" | "switch";
 };
 
-export function SmartThingsSwitch({ deviceId, initialOn }: Props) {
+export function SmartThingsSwitch({
+  deviceId,
+  initialOn,
+  appearance = "power",
+}: Props) {
   const [on, setOn] = useState(initialOn);
   const [isPending, startTransition] = useTransition();
 
-  const handleToggle = () => {
-    const next = !on;
+  const toggle = (next: boolean) => {
     startTransition(async () => {
       try {
         await setSwitchAction(deviceId, next);
@@ -31,25 +36,30 @@ export function SmartThingsSwitch({ deviceId, initialOn }: Props) {
     });
   };
 
+  if (appearance === "switch") {
+    return (
+      <div className="flex items-center gap-3">
+        <Switch
+          size="lg"
+          checked={on === true}
+          onCheckedChange={toggle}
+          pending={isPending}
+          disabled={on === null}
+          aria-label="전원"
+        />
+        <span className="text-sm text-muted-foreground">
+          {on === null ? "상태 없음" : on ? "켜짐" : "꺼짐"}
+        </span>
+      </div>
+    );
+  }
+
   return (
-    <button
-      type="button"
-      onClick={handleToggle}
-      disabled={on === null || isPending}
-      aria-pressed={on === true}
-      className={cn(
-        "mt-3 flex w-full items-center justify-center gap-2 rounded-lg px-4 py-3 text-base font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-60",
-        on
-          ? "bg-primary text-primary-foreground hover:bg-primary/90"
-          : "bg-muted text-muted-foreground hover:bg-muted/80",
-      )}
-    >
-      {isPending ? (
-        <Loader2 className="h-5 w-5 animate-spin" />
-      ) : (
-        <Power className="h-5 w-5" />
-      )}
-      {on === null ? "상태 없음" : on ? "ON" : "OFF"}
-    </button>
+    <PowerButton
+      on={on === true}
+      pending={isPending}
+      disabled={on === null}
+      onClick={() => toggle(!on)}
+    />
   );
 }

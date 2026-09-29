@@ -3,6 +3,7 @@
 import { Loader2, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
+import { Button } from "@/components/ui/button";
 import { useConfirm } from "@/hooks/use-confirm";
 import { useRemoveDevice } from "@/hooks/use-devices";
 
@@ -33,18 +34,15 @@ export function RemoveDeviceButton({ nodeId, name }: Props) {
   };
 
   return (
-    <button
-      type="button"
+    <Button
+      variant="ghost"
+      size="icon-sm"
       onClick={handleRemove}
       disabled={remove.isPending}
       aria-label="기기 삭제"
-      className="shrink-0 rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-danger/10 hover:text-danger disabled:opacity-50"
+      className="hover:bg-danger/10 hover:text-danger"
     >
-      {remove.isPending ? (
-        <Loader2 className="h-4 w-4 animate-spin" />
-      ) : (
-        <Trash2 className="h-4 w-4" />
-      )}
-    </button>
+      {remove.isPending ? <Loader2 className="animate-spin" /> : <Trash2 />}
+    </Button>
   );
 }

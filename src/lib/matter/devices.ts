@@ -14,6 +14,7 @@ import type {
   DevicePowerDto,
 } from "@/types/matter";
 
+import { deleteDashboardItem } from "@/lib/db/dashboard";
 import { deleteDeviceName, getDeviceNameMap } from "@/lib/db/device-names";
 
 import { getMatterClient } from "./client";
@@ -366,11 +367,12 @@ export async function removeDevice(nodeId: string): Promise<void> {
   // node.node_id는 number|bigint 원본을 그대로 넘긴다.
   await client.removeNode(node.node_id);
 
-  // 이름 삭제는 부가 작업. 실패해도 기기 제거 자체는 성공으로 취급한다.
+  // 이름/메인 표시 삭제는 부가 작업. 실패해도 기기 제거 자체는 성공으로 취급한다.
   try {
     await deleteDeviceName(nodeId);
+    await deleteDashboardItem("matter", nodeId);
   } catch (error) {
-    console.error("[db] 커스텀 이름 삭제 실패:", error);
+    console.error("[db] 커스텀 이름/메인 표시 삭제 실패:", error);
   }
 }
 

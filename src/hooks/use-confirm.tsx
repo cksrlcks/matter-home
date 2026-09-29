@@ -11,7 +11,6 @@ import {
 
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogFooter, DialogHeader } from "@/components/ui/dialog";
-import { cn } from "@/lib/utils";
 
 type ConfirmOptions = {
   cancelLabel?: string;
@@ -70,15 +69,12 @@ export function ConfirmProvider({ children }: PropsWithChildren) {
               description={state.description}
             />
             <DialogFooter>
-              <Button variant="outline" onClick={() => close(false)}>
+              <Button variant="ghost" onClick={() => close(false)}>
                 {state.cancelLabel}
               </Button>
               <Button
+                variant={state.destructive ? "danger" : "default"}
                 onClick={() => close(true)}
-                className={cn(
-                  state.destructive &&
-                    "bg-danger text-white hover:bg-danger/90",
-                )}
               >
                 {state.okLabel}
               </Button>

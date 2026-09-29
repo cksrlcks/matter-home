@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 
 import { cn } from "@/lib/utils";
 
@@ -13,6 +14,7 @@ type DialogProps = {
 
 // 경량 모달. shadcn/Radix 대신 프로젝트 UI 톤에 맞춘 커스텀 구현.
 // 닫기는 하단 취소 버튼/백드롭/ESC로만 (상단 X 아이콘 사용 안 함).
+// body에 포털로 그린다 — transform이 걸린 조상(hover 중인 타일 등) 안에서 fixed가 갇히지 않도록.
 export function Dialog({ open, onClose, children, className }: DialogProps) {
   useEffect(() => {
     if (!open) return;
@@ -28,9 +30,9 @@ export function Dialog({ open, onClose, children, className }: DialogProps) {
     };
   }, [open, onClose]);
 
-  if (!open) return null;
+  if (!open || typeof document === "undefined") return null;
 
-  return (
+  return createPortal(
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4"
       role="dialog"
@@ -43,13 +45,14 @@ export function Dialog({ open, onClose, children, className }: DialogProps) {
       />
       <div
         className={cn(
-          "relative z-10 w-full max-w-md rounded-xl border border-border bg-card p-6 text-card-foreground shadow-lg",
+          "relative z-10 w-full max-w-md rounded-2xl bg-card p-6 text-card-foreground shadow-lg",
           className,
         )}
       >
         {children}
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
 
@@ -62,7 +65,7 @@ export function DialogHeader({
 }) {
   return (
     <div className="mb-4 flex flex-col gap-1.5">
-      <h2 className="text-lg font-semibold">{title}</h2>
+      <h2 className="text-lg font-bold tracking-[-.01em]">{title}</h2>
       {description && (
         <p className="text-sm text-muted-foreground">{description}</p>
       )}

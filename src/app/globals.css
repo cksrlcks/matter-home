@@ -1,34 +1,64 @@
 @import "tailwindcss";
 
+/*
+  디자인 토큰 — DESIGN.md(canonical) → 프로젝트 유틸 이름 매핑
+  기존 shadcn식 유틸 이름(bg-card, text-muted-foreground …)은 유지하고 값만 교체했다.
+
+  canonical(DESIGN.md)     @theme 유틸               raw 변수
+  --color-bg               bg-background             --background
+  --color-bg-soft          bg-muted                  --muted
+  --color-surface          bg-card                   --card
+  --color-text             text-foreground           --foreground
+  --color-muted            text-muted-foreground     --muted-foreground
+  --color-border           border-border             --border
+  --color-primary          bg-primary                --primary
+  --color-primary-strong   bg-primary-strong         --primary-strong
+  --color-secondary        bg-secondary (네이비)     --secondary
+  --color-accent-soft      bg-accent-soft (켜짐)     --accent-soft
+  --color-success/warning/danger/info  동일          동일
+  포커스 링(ring)은 info 색을 쓴다.
+*/
 :root {
-  --background: #f6f7f9;
-  --foreground: #16181d;
+  --background: #f4f5f2;
+  --foreground: #1a1c1e;
   --card: #ffffff;
-  --card-foreground: #16181d;
-  --muted: #eceef1;
-  --muted-foreground: #5b6472;
-  --border: #e2e5ea;
-  --primary: #2563eb;
+  --card-foreground: #1a1c1e;
+  --muted: #eaece7;
+  --muted-foreground: #5f6773;
+  --border: #e1e4df;
+  --primary: #202327;
+  --primary-strong: #0d0f11;
   --primary-foreground: #ffffff;
-  --ring: #93b4f5;
-  --success: #16a34a;
+  --secondary: #1b2f5e;
+  --secondary-foreground: #ffffff;
+  --accent-soft: #e6ecf7;
+  --success: #15803d;
+  --warning: #dc6803;
   --danger: #dc2626;
+  --info: #2563eb;
+  --ring: #2563eb;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0b0d10;
-    --foreground: #e7e9ee;
-    --card: #14171c;
-    --card-foreground: #e7e9ee;
-    --muted: #1c2027;
-    --muted-foreground: #99a2b0;
-    --border: #262b33;
-    --primary: #3b82f6;
-    --primary-foreground: #ffffff;
-    --ring: #1e40af;
-    --success: #22c55e;
-    --danger: #ef4444;
+    --background: #101214;
+    --foreground: #eceeea;
+    --card: #1d2024;
+    --card-foreground: #eceeea;
+    --muted: #181b1e;
+    --muted-foreground: #9aa3ae;
+    --border: #2a2e33;
+    --primary: #f2f3f0;
+    --primary-strong: #ffffff;
+    --primary-foreground: #1a1c1e;
+    --secondary: #7ea2f0;
+    --secondary-foreground: #ffffff;
+    --accent-soft: #1b2540;
+    --success: #4ade80;
+    --warning: #fdba74;
+    --danger: #f87171;
+    --info: #60a5fa;
+    --ring: #60a5fa;
   }
 }
 
@@ -41,17 +71,44 @@
   --color-muted-foreground: var(--muted-foreground);
   --color-border: var(--border);
   --color-primary: var(--primary);
+  --color-primary-strong: var(--primary-strong);
   --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-accent-soft: var(--accent-soft);
   --color-ring: var(--ring);
   --color-success: var(--success);
+  --color-warning: var(--warning);
   --color-danger: var(--danger);
+  --color-info: var(--info);
+}
+
+/* 타이포·섀도우 스케일 (DESIGN.md). --font-pretendard 는 next/font/local이 <html>에 주입한다.
+   라운드는 Tailwind 기본 스케일을 그대로 쓴다: sm 8px=rounded-lg, md 12px=rounded-xl, lg 16px=rounded-2xl */
+@theme {
+  --font-sans:
+    var(--font-pretendard), "Pretendard Variable", "Pretendard", -apple-system,
+    BlinkMacSystemFont, system-ui, "Apple SD Gothic Neo", "Noto Sans KR",
+    sans-serif;
+  --text-2xl: 26px;
+  --text-2xl--line-height: 1.15;
+  --text-3xl: 32px;
+  --text-3xl--line-height: 1.15;
+  --text-4xl: 44px;
+  --text-4xl--line-height: 1;
+  --shadow-sm: 0 1px 2px rgb(26 28 30 / 0.05);
+  --shadow-md: 0 4px 14px rgb(26 28 30 / 0.07);
+  --shadow-lg: 0 14px 36px rgb(26 28 30 / 0.12);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family:
-    ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
-    "Helvetica Neue", Arial, "Apple SD Gothic Neo", "Malgun Gothic",
-    "Noto Sans KR", sans-serif;
+  font-family: var(--font-sans);
+}
+
+/* 키보드 포커스 링 (DESIGN.md: 2px info, offset 2px) */
+:focus-visible {
+  outline: 2px solid var(--info);
+  outline-offset: 2px;
 }

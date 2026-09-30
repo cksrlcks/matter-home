@@ -79,22 +79,3 @@ export type DeviceDto = {
   /** 전력 측정을 지원하지 않는 기기는 null */
   energy: DeviceEnergyDto | null;
 };
-
-/** discover로 찾은, 아직 fabric에 등록되지 않은 commissionable 기기 */
-export type CommissionableDeviceDto = {
-  /** 목록 key용 식별자 (instance name 또는 discriminator 기반) */
-  id: string;
-  /** 표시 이름: device_name → 기기 타입명 → vendor/product 순으로 결정 */
-  name: string;
-  vendorName?: string;
-  vendorId?: number;
-  productId?: number;
-  deviceType?: string;
-  /** 12bit long discriminator. 페어링 코드와 대조할 때 참고용 */
-  discriminator?: number;
-  /** 0=광고만, 1=basic window, 2=enhanced window */
-  commissioningMode?: number;
-  /** 발견 경로. 주소가 없으면 BLE 광고로 발견된 것으로 본다 */
-  transport: "ble" | "network";
-  addresses: string[];
-};

@@ -1,6 +1,6 @@
 import "server-only";
 
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 
 import { getDb } from "@/lib/db";
 import { smartthingsTokens } from "@/lib/db/schema";
@@ -45,6 +45,8 @@ async function requestToken(params: Record<string, string>): Promise<TokenRespon
     },
     body: new URLSearchParams({ ...params, client_id: clientId }),
     cache: "no-store",
+    // 갱신은 행 잠금을 쥔 채 호출하므로 오래 매달리지 않게 한다.
+    signal: AbortSignal.timeout(10_000),
   });
   if (!res.ok) {
     throw Object.assign(new Error(`SmartThings 토큰 요청 실패 (${res.status})`), {
@@ -88,7 +90,20 @@ export function getAccessToken(): Promise<string> {
 }
 
 async function loadOrRefresh(): Promise<string> {
+  // 아직 유효하면 잠그지 않고 읽기만 한다.
+  const [current] = await getDb()
+    .select()
+    .from(smartthingsTokens)
+    .where(eq(smartthingsTokens.id, ROW_ID));
+  if (!current) throw notConnected();
+  if (!needsRefresh(current.expiresAt, new Date())) {
+    memo = current;
+    return current.accessToken;
+  }
+
   return getDb().transaction(async (tx) => {
+    // 상대 인스턴스가 잠금을 쥔 채 멈춰도(dev 노트북 절전 등) 무한정 기다리지 않는다.
+    await tx.execute(sql`set local lock_timeout = '10s'`);
     // 운영/dev가 같은 DB를 쓰므로 행을 잠가 동시에 갱신하지 않게 한다.
     // 잠금을 기다리는 사이 다른 쪽이 갱신했으면 그 값을 그대로 쓴다.
     const [row] = await tx

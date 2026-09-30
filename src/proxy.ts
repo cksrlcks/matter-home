@@ -8,8 +8,8 @@ import { verifySessionToken } from "@/lib/auth/token";
 export async function proxy(request: NextRequest) {
   const { pathname, search } = request.nextUrl;
 
-  // 로그인/로그아웃 API는 항상 열어둔다.
-  if (pathname.startsWith("/api/auth")) {
+  // 로그인/로그아웃 API와 go2rtc 토큰 API(비밀키로 직접 검사)는 항상 열어둔다.
+  if (pathname.startsWith("/api/auth") || pathname === "/api/smartthings/token") {
     return NextResponse.next();
   }
 

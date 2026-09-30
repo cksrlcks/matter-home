@@ -75,7 +75,16 @@ function cached<T>(
 }
 
 // 기기 이름/종류는 거의 바뀌지 않으므로 10분간 재사용한다.
-const deviceCache = new Map<string, CacheEntry<SmartThingsDevice>>();
+// 페이지와 API 라우트는 따로 번들링되므로, clearCaches가 양쪽에 적용되도록 globalThis에 둔다.
+type StCaches = {
+  device: Map<string, CacheEntry<SmartThingsDevice>>;
+  status: Map<string, CacheEntry<CameraStatus>>;
+};
+const caches = ((globalThis as { __stCaches?: StCaches }).__stCaches ??= {
+  device: new Map(),
+  status: new Map(),
+});
+const deviceCache = caches.device;
 
 export function getDevice(deviceId: string): Promise<SmartThingsDevice> {
   return cached(deviceCache, deviceId, 10 * 60_000, () =>
@@ -135,7 +144,7 @@ async function fetchCameraStatus(deviceId: string): Promise<CameraStatus> {
 
 // 상태 조회는 go2rtc 스크립트와 같은 한도(1분 10회)를 쓰므로 30초간 재사용한다.
 const STATUS_TTL_MS = 30_000;
-const statusCache = new Map<string, CacheEntry<CameraStatus>>();
+const statusCache = caches.status;
 
 export function getCameraStatus(deviceId: string): Promise<CameraStatus> {
   return cached(statusCache, deviceId, STATUS_TTL_MS, () =>

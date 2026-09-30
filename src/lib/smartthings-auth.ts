@@ -57,9 +57,14 @@ async function requestToken(params: Record<string, string>): Promise<TokenRespon
 }
 
 // 매 요청마다 DB를 읽지 않도록 현재 토큰을 메모리에 둔다.
-let memo: TokenRow | null = null;
-// 같은 인스턴스에서 동시에 만료를 만나도 갱신은 한 번만 한다.
-let pending: Promise<string> | null = null;
+// 같은 인스턴스에서 동시에 만료를 만나도 갱신은 한 번만 한다(pending).
+// Next.js는 페이지와 API 라우트를 따로 번들링해 모듈 변수가 둘로 나뉜다.
+// 콜백(라우트)에서 바꾼 토큰을 페이지도 보도록 globalThis에 둔다.
+type StAuthStore = { memo: TokenRow | null; pending: Promise<string> | null };
+const store = ((globalThis as { __stAuth?: StAuthStore }).__stAuth ??= {
+  memo: null,
+  pending: null,
+});
 
 export async function exchangeCode(code: string): Promise<void> {
   const { redirectUri } = oauthConfig();
@@ -76,17 +81,17 @@ export async function exchangeCode(code: string): Promise<void> {
       target: smartthingsTokens.id,
       set: { ...row, updatedAt: new Date() },
     });
-  memo = row;
+  store.memo = row;
 }
 
 export function getAccessToken(): Promise<string> {
-  if (memo && !needsRefresh(memo.expiresAt, new Date())) {
-    return Promise.resolve(memo.accessToken);
+  if (store.memo && !needsRefresh(store.memo.expiresAt, new Date())) {
+    return Promise.resolve(store.memo.accessToken);
   }
-  pending ??= loadOrRefresh().finally(() => {
-    pending = null;
+  store.pending ??= loadOrRefresh().finally(() => {
+    store.pending = null;
   });
-  return pending;
+  return store.pending;
 }
 
 async function loadOrRefresh(): Promise<string> {
@@ -97,7 +102,7 @@ async function loadOrRefresh(): Promise<string> {
     .where(eq(smartthingsTokens.id, ROW_ID));
   if (!current) throw notConnected();
   if (!needsRefresh(current.expiresAt, new Date())) {
-    memo = current;
+    store.memo = current;
     return current.accessToken;
   }
 
@@ -114,7 +119,7 @@ async function loadOrRefresh(): Promise<string> {
     if (!row) throw notConnected();
 
     if (!needsRefresh(row.expiresAt, new Date())) {
-      memo = row;
+      store.memo = row;
       return row.accessToken;
     }
 
@@ -130,7 +135,7 @@ async function loadOrRefresh(): Promise<string> {
       .update(smartthingsTokens)
       .set({ ...next, updatedAt: new Date() })
       .where(eq(smartthingsTokens.id, ROW_ID));
-    memo = next;
+    store.memo = next;
     return next.accessToken;
   });
 }

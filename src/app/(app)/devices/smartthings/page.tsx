@@ -1,6 +1,7 @@
 import { connection } from "next/server";
 
 import { DashboardControl } from "@/components/dashboard-control";
+import { SmartThingsConnect } from "@/components/smartthings-connect";
 import { SmartThingsDeviceCard } from "@/components/smartthings-device-card";
 import {
   getDevices,
@@ -10,8 +11,13 @@ import {
   type SmartThingsDevice,
 } from "@/lib/smartthings";
 
-export default async function SmartThingsDevicesPage() {
+export default async function SmartThingsDevicesPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ st_error?: string }>;
+}) {
   await connection();
+  const { st_error } = await searchParams;
   // 외부 환경에서는 DB에 닿지 않으므로 메인 구성 편집을 숨긴다.
   const external = process.env.EXTERNAL_MODE === "true";
 
@@ -19,6 +25,7 @@ export default async function SmartThingsDevicesPage() {
   // c2c-switch 기기만 켜짐/꺼짐 상태를 조회한다. (조회 실패 시 null)
   const switchStates = new Map<string, boolean | null>();
   let error: string | null = null;
+  let needsConnect = false;
   try {
     devices = await getDevices();
     const switches = devices.filter(isControllableSwitch);
@@ -27,12 +34,15 @@ export default async function SmartThingsDevicesPage() {
     );
     switches.forEach((d, i) => switchStates.set(d.deviceId, states[i]));
   } catch (e) {
+    needsConnect = (e as { status?: number }).status === 401;
     error = e instanceof Error ? e.message : "알 수 없는 오류";
   }
 
   return (
     <>
-      {error ? (
+      {needsConnect || st_error ? (
+        <SmartThingsConnect failed={!!st_error} />
+      ) : error ? (
         <p className="text-sm text-danger">{error}</p>
       ) : devices.length === 0 ? (
         <p className="text-sm text-muted-foreground">등록된 기기가 없습니다.</p>

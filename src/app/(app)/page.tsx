@@ -31,9 +31,11 @@ async function loadSmartThings(deviceId: string): Promise<SmartThingsEntry> {
     const status = (e as { status?: number }).status;
     return {
       error:
-        status === 404 || status === 403
-          ? "SmartThings에서 찾을 수 없는 기기입니다."
-          : "SmartThings 기기를 불러오지 못했습니다.",
+        status === 401
+          ? "SmartThings 연결이 필요합니다."
+          : status === 404 || status === 403
+            ? "SmartThings에서 찾을 수 없는 기기입니다."
+            : "SmartThings 기기를 불러오지 못했습니다.",
     };
   }
 }

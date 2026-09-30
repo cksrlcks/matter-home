@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { connection } from "next/server";
 
 import { LivePlayer } from "@/components/live-player";
+import { SmartThingsConnect } from "@/components/smartthings-connect";
 import { SmartThingsSwitch } from "@/components/smartthings-switch";
 import { SnapshotButton } from "@/components/snapshot-button";
 import { Card } from "@/components/ui/card";
@@ -40,8 +41,10 @@ export default async function CameraPage({
   // 404/403만 "없는 기기"로 본다. 한도 초과 등 다른 오류는 그대로 오류 화면으로.
   const device = await getDevice(deviceId).catch((e: { status?: number }) => {
     if (e.status === 404 || e.status === 403) return null;
+    if (e.status === 401) return "disconnected" as const;
     throw e;
   });
+  if (device === "disconnected") return <SmartThingsConnect />;
   if (!device || !isCamera(device)) notFound();
   const loaded = await getCameraStatus(deviceId).catch(() => null);
   const status = loaded ?? EMPTY_STATUS;

@@ -28,6 +28,7 @@
    - client secret은 등록할 때 한 번만 보여주므로 바로 env에 넣는다.
 2. env 설정(Dokploy / `.env.local`)
    - `SMARTTHINGS_CLIENT_ID`, `SMARTTHINGS_CLIENT_SECRET`: 1에서 발급
+   - `SMARTTHINGS_REDIRECT_URI`: 1에서 등록한 redirect URI 그대로
    - `SMARTTHINGS_TOKEN_SECRET`: go2rtc 공유 비밀키, `openssl rand -hex 32`
    - `SMARTTHINGS_TOKEN` 삭제
 
@@ -53,7 +54,7 @@ dev PC는 운영과 같은 DB를 보므로 운영에서 한 번 연결하면 dev
   1. 메모리 캐시가 만료 5분 전보다 이르면 그대로 반환한다.
   2. DB 행을 읽어서 아직 유효하면 캐시하고 반환한다.
   3. 만료가 가까우면 트랜잭션 안에서 `SELECT … FOR UPDATE`로 잠그고 다시 확인한다. 다른 인스턴스가 먼저 갱신했으면 그 값을 쓰고, 아니면 refresh한 뒤 update한다.
-  4. 행이 없거나 refresh가 실패하면 `status: 401` 오류("SmartThings 연결이 필요합니다.")를 던진다.
+  4. 행이 없거나 refresh가 400/401로 거부되면 `status: 401` 오류("SmartThings 연결이 필요합니다.")를 던진다. 네트워크 오류나 5xx는 그대로 던진다(다시 연결할 필요가 없으므로).
 - `exchangeCode(code: string): Promise<void>`: authorization_code를 토큰으로 교환하고 upsert한다.
 - 토큰 요청은 `POST https://api.smartthings.com/oauth/token`으로 보낸다. `Authorization: Basic base64(client_id:client_secret)`, `application/x-www-form-urlencoded` 형식이다.
   - 코드 교환: `grant_type=authorization_code`, `code`, `redirect_uri`, `client_id`
@@ -80,12 +81,13 @@ dev PC는 운영과 같은 DB를 보므로 운영에서 한 번 연결하면 dev
   - `exchangeCode` → `clearCaches()` → state 쿠키 삭제 → `/devices/smartthings`로 리다이렉트한다.
   - `error` 쿼리(사용자가 거부한 경우)나 교환 실패 시에는 `/devices/smartthings?st_error=1`로 보낸다.
   - 세션 쿠키가 SameSite=Lax라서 top-level GET 리다이렉트에도 쿠키가 실려 proxy를 통과한다.
-- `redirect_uri`는 요청 origin + `/api/smartthings/oauth/callback`으로 만든다. SmartThings에 등록한 값과 같아야 한다.
+- `redirect_uri`는 env `SMARTTHINGS_REDIRECT_URI`로 명시한다. 앱이 Traefik(http 엔트리포인트) 뒤에 있어서 요청 origin이 `http://`로 보일 수 있기 때문이다. SmartThings에 등록한 값과 같아야 한다.
+- 콜백 이후 리다이렉트는 상대 경로 `Location`(303)으로 보낸다(같은 이유).
 
 ### go2rtc 토큰 엔드포인트: `GET /api/smartthings/token`
 
 - `proxy.ts`는 이 경로만 세션 검사를 건너뛴다.
-- route는 `Authorization: Bearer <SMARTTHINGS_TOKEN_SECRET>`을 `timingSafeEqual`로 비교한다. env가 비었거나 값이 다르면 401.
+- route는 `Authorization: Bearer <SMARTTHINGS_TOKEN_SECRET>`을 `timingSafeEqual`로 비교한다. env가 비었거나 32자 미만이거나 값이 다르면 401.
 - 통과하면 `getAccessToken()` 값을 `text/plain`으로 돌려준다(`Cache-Control: no-store`). 연결 안 됨은 401이 아니라 503으로 돌려서 비밀키 오류와 구분한다.
 
 ### go2rtc 변경 (사용자 적용)
@@ -106,7 +108,7 @@ dev PC는 운영과 같은 DB를 보므로 운영에서 한 번 연결하면 dev
 
 ### env / 배포 파일
 
-- `.env.example`, `docker-compose.yml`: `SMARTTHINGS_TOKEN`을 빼고 `SMARTTHINGS_CLIENT_ID`, `SMARTTHINGS_CLIENT_SECRET`, `SMARTTHINGS_TOKEN_SECRET`을 추가한다.
+- `.env.example`, `docker-compose.yml`: `SMARTTHINGS_TOKEN`을 빼고 `SMARTTHINGS_CLIENT_ID`, `SMARTTHINGS_CLIENT_SECRET`, `SMARTTHINGS_REDIRECT_URI`, `SMARTTHINGS_TOKEN_SECRET`을 추가한다.
 
 ## 오류 처리 요약
 

@@ -1,6 +1,8 @@
 import "server-only";
 
-// SmartThings 클라우드 API 호출. 토큰은 server-only env.
+import { getAccessToken } from "@/lib/smartthings-auth";
+
+// SmartThings 클라우드 API 호출. 토큰은 OAuth로 받아 DB에 보관한다(smartthings-auth).
 export type SmartThingsDevice = {
   deviceId: string;
   label?: string;
@@ -18,8 +20,7 @@ export const isControllableSwitch = (d: SmartThingsDevice) =>
   d.name === "c2c-switch" || isCamera(d);
 
 async function stFetch<T>(path: string, init?: RequestInit): Promise<T> {
-  const token = process.env.SMARTTHINGS_TOKEN;
-  if (!token) throw new Error("SMARTTHINGS_TOKEN 환경변수가 설정되지 않았습니다.");
+  const token = await getAccessToken();
 
   const res = await fetch(`https://api.smartthings.com/v1${path}`, {
     ...init,
@@ -99,8 +100,8 @@ export async function setSwitch(deviceId: string, on: boolean): Promise<void> {
 }
 
 // ── 카메라 ──
-// 실시간 영상(videoStream)은 인증된 rtsps 주소라 개인 토큰으로는 재생할 수 없어서,
-// 스냅샷(imageCapture)과 최근 녹화 클립(videoCapture)만 다룬다.
+// 실시간 영상(videoStream)은 go2rtc가 따로 받으므로(토큰은 /api/smartthings/token),
+// 여기서는 스냅샷(imageCapture)과 최근 녹화 클립(videoCapture)만 다룬다.
 
 type Attr<T> = { value: T | null; timestamp?: string };
 
@@ -140,6 +141,12 @@ export function getCameraStatus(deviceId: string): Promise<CameraStatus> {
   return cached(statusCache, deviceId, STATUS_TTL_MS, () =>
     fetchCameraStatus(deviceId),
   );
+}
+
+// 연결 직후에는 "연결 필요"로 실패한 결과(30초 재사용)를 비운다.
+export function clearCaches(): void {
+  deviceCache.clear();
+  statusCache.clear();
 }
 
 async function assertCamera(deviceId: string) {
@@ -186,7 +193,7 @@ export async function fetchCameraMedia(
   }
   return fetch(url, {
     headers: {
-      Authorization: `Bearer ${process.env.SMARTTHINGS_TOKEN}`,
+      Authorization: `Bearer ${await getAccessToken()}`,
       ...(range ? { Range: range } : {}),
     },
     cache: "no-store",

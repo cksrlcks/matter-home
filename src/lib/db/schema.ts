@@ -76,3 +76,14 @@ export const dashboardItems = pgTable(
   },
   (table) => [primaryKey({ columns: [table.source, table.deviceId] })],
 );
+
+// SmartThings OAuth 토큰. 집 전체가 계정 하나를 쓰므로 id=1 한 줄만 둔다.
+export const smartthingsTokens = pgTable("smartthings_tokens", {
+  id: integer("id").primaryKey(),
+  accessToken: text("access_token").notNull(),
+  refreshToken: text("refresh_token").notNull(),
+  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+});

@@ -15,7 +15,22 @@ import {
 // (go2rtc는 /api/smartthings/token 으로 받아 쓴다. 두 곳에서 갱신하면 refresh token이 서로 무효화될 수 있음)
 export const AUTHORIZE_URL = "https://api.smartthings.com/oauth/authorize";
 const TOKEN_URL = "https://api.smartthings.com/oauth/token";
-export const SCOPES = "r:devices:* x:devices:*";
+// 앱(apps:oauth)에 등록된 scope 전부. 기기 scope만으로는 영상 서버(st-av.net)가 500을 돌려준다.
+export const SCOPES = [
+  "r:devices:*",
+  "w:devices:*",
+  "x:devices:*",
+  "r:locations:*",
+  "w:locations:*",
+  "x:locations:*",
+  "r:hubs:*",
+  "r:scenes:*",
+  "x:scenes:*",
+  "r:rules:*",
+  "w:rules:*",
+  "r:installedapps",
+  "w:installedapps",
+].join(" ");
 export const OAUTH_STATE_COOKIE = "st_oauth_state";
 
 const ROW_ID = 1;

@@ -3,6 +3,7 @@ import { connection } from "next/server";
 import { DashboardControl } from "@/components/dashboard-control";
 import { SmartThingsConnect } from "@/components/smartthings-connect";
 import { SmartThingsDeviceCard } from "@/components/smartthings-device-card";
+import { withCustomNames } from "@/lib/db/smartthings-device-names";
 import {
   getDevices,
   getSwitchState,
@@ -27,7 +28,7 @@ export default async function SmartThingsDevicesPage({
   let error: string | null = null;
   let needsConnect = false;
   try {
-    devices = await getDevices();
+    devices = await withCustomNames(await getDevices());
     const switches = devices.filter(isControllableSwitch);
     const states = await Promise.all(
       switches.map((d) => getSwitchState(d.deviceId).catch(() => null)),
@@ -53,6 +54,7 @@ export default async function SmartThingsDevicesPage({
               key={d.deviceId}
               device={d}
               camera={isCamera(d)}
+              editableName={!external}
               switchOn={
                 switchStates.has(d.deviceId)
                   ? (switchStates.get(d.deviceId) ?? null)

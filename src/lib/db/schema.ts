@@ -26,6 +26,18 @@ export const deviceNames = pgTable("device_names", {
 
 export type DeviceNameRow = typeof deviceNames.$inferSelect;
 
+// SmartThings 기기별 앱 내 표시 이름. SmartThings 쪽 label은 건드리지 않는다.
+export const smartthingsDeviceNames = pgTable("smartthings_device_names", {
+  deviceId: text("device_id").primaryKey(),
+  name: text("name").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+});
+
 // 플러그 누적 전력량 스냅샷. 기간 사용량은 연속 샘플 간 차이의 합으로 계산한다.
 export const energySamples = pgTable(
   "energy_samples",

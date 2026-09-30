@@ -9,7 +9,13 @@ export type SmartThingsDevice = {
   name: string;
   manufacturerName?: string;
   deviceTypeName?: string;
+  /** 앱에서 붙인 이름 (SmartThings API 필드 아님, withCustomNames로 채움) */
+  customName?: string;
 };
+
+// 표시 이름: 앱 지정 이름 → SmartThings label → name
+export const displayName = (d: SmartThingsDevice) =>
+  d.customName || d.label || d.name;
 
 const CAMERA_DEVICE_NAME = "imi.camera.default";
 

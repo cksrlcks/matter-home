@@ -6,6 +6,7 @@ import { EnergySummary } from "@/components/energy-summary";
 import { SmartThingsDeviceCard } from "@/components/smartthings-device-card";
 import { UnavailableDeviceCard } from "@/components/unavailable-device-card";
 import { getDashboard } from "@/lib/db/dashboard";
+import { withCustomNames } from "@/lib/db/smartthings-device-names";
 import {
   getDevice,
   getSwitchState,
@@ -22,7 +23,7 @@ type SmartThingsEntry =
 // 기기 정보는 10분 캐시(getDevice), 스위치 상태만 매번 조회한다.
 async function loadSmartThings(deviceId: string): Promise<SmartThingsEntry> {
   try {
-    const device = await getDevice(deviceId);
+    const [device] = await withCustomNames([await getDevice(deviceId)]);
     const switchOn = isControllableSwitch(device)
       ? await getSwitchState(deviceId).catch(() => null)
       : undefined;

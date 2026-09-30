@@ -7,7 +7,9 @@ import { SmartThingsConnect } from "@/components/smartthings-connect";
 import { SmartThingsSwitch } from "@/components/smartthings-switch";
 import { SnapshotButton } from "@/components/snapshot-button";
 import { Card } from "@/components/ui/card";
+import { withCustomNames } from "@/lib/db/smartthings-device-names";
 import {
+  displayName,
   getCameraStatus,
   getDevice,
   isCamera,
@@ -46,6 +48,8 @@ export default async function CameraPage({
   });
   if (device === "disconnected") return <SmartThingsConnect />;
   if (!device || !isCamera(device)) notFound();
+  const [named] = await withCustomNames([device]);
+  const name = displayName(named);
   const loaded = await getCameraStatus(deviceId).catch(() => null);
   const status = loaded ?? EMPTY_STATUS;
   const media = `/api/smartthings/cameras/${deviceId}/media`;
@@ -70,7 +74,7 @@ export default async function CameraPage({
         <div className="flex flex-col gap-4 lg:col-span-2">
           <Card className="flex flex-col gap-3 p-5">
             <h2 className="truncate text-lg font-semibold">
-              {device.label || device.name} · 실시간
+              {name} · 실시간
             </h2>
             {status.on === false ? (
               <p className="text-sm text-muted-foreground">
@@ -96,7 +100,7 @@ export default async function CameraPage({
               // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={`${media}?type=image&t=${encodeURIComponent(status.captureTime ?? "")}`}
-                alt={`${device.label || device.name} 스냅샷`}
+                alt={`${name} 스냅샷`}
                 className="aspect-video w-full rounded-lg bg-muted object-contain"
               />
             ) : (

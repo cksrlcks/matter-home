@@ -2,8 +2,9 @@ import type { ReactNode } from "react";
 import { Camera, Cpu, Lightbulb, Plug } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
-import type { SmartThingsDevice } from "@/lib/smartthings";
+import { displayName, type SmartThingsDevice } from "@/lib/smartthings";
 
+import { SmartThingsDeviceName } from "./device-name";
 import { DeviceTile } from "./device-tile";
 import { SmartThingsSwitch } from "./smartthings-switch";
 
@@ -25,6 +26,8 @@ type Props = {
   camera?: boolean;
   /** 타일 하단 추가 영역 (기기관리의 메인 표시 설정 등) */
   footer?: ReactNode;
+  /** 기기관리 화면: 앱 내 표시 이름 변경을 노출 */
+  editableName?: boolean;
   className?: string;
 };
 
@@ -33,9 +36,10 @@ export function SmartThingsDeviceCard({
   switchOn,
   camera,
   footer,
+  editableName,
   className,
 }: Props) {
-  const name = device.label || device.name;
+  const name = displayName(device);
   const state = switchOn === null ? "offline" : switchOn ? "on" : "off";
   const subtitle = [device.manufacturerName, device.deviceTypeName ?? device.name]
     .filter(Boolean)
@@ -45,7 +49,18 @@ export function SmartThingsDeviceCard({
     <DeviceTile
       state={state}
       icon={deviceIcon(device, camera)}
-      title={name}
+      title={
+        editableName ? (
+          <SmartThingsDeviceName
+            deviceId={device.deviceId}
+            name={name}
+            smartThingsName={device.label || device.name}
+            customName={device.customName ?? null}
+          />
+        ) : (
+          name
+        )
+      }
       subtitle={switchOn === null ? <Badge>상태 없음</Badge> : subtitle}
       href={camera ? `/devices/smartthings/${device.deviceId}` : undefined}
       linkLabel={`${name} 실시간 보기`}

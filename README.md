@@ -17,6 +17,8 @@ matterjs-server의 WebSocket API를 호출하는 **UI/API 계층**만 담당합�
 - ✅ 기기 카드 UI (이름 / 벤더 / Online 상태 / ON·OFF)
 - ✅ `POST /api/devices/:nodeId/power` — OnOff cluster(6) 제어 (`endpointId`로 다구 스위치의 구 지정)
 - ✅ Wi-Fi 설정 (`/api/matter/wifi`) — Wi-Fi 방식 Matter 기기 추가용 SSID/비밀번호를 matter-server에 저장 (앱 DB에는 저장하지 않음)
+- ✅ 홈 화면 타일 — 다구 스위치를 구별 타일로 풀거나 한 타일로 묶어서 표시, 편집 모드에서 끌어서 순서·그룹 변경 (`PUT /api/dashboard/layout`)
+- ✅ 하단 탭(홈 / 기기 / 설정) + "스티커 타일" 디자인 ([DESIGN.md](DESIGN.md))
 - ✅ 다구 스위치 지원 — On/Off endpoint마다 개별 제어 + 구별 이름
 - ✅ React Query 기반 조회 + optimistic mutation + 3초 polling
 - ✅ loading / error UI

@@ -9,7 +9,7 @@ import type {
   DeviceSwitchDto,
 } from "@/types/matter";
 
-import { deleteDashboardItem } from "@/lib/db/dashboard";
+import { deleteDashboardDevice } from "@/lib/db/dashboard";
 import {
   deleteEndpointNames,
   endpointNameKey,
@@ -313,7 +313,7 @@ export async function removeDevice(nodeId: string): Promise<void> {
   try {
     await deleteDeviceName(nodeId);
     await deleteEndpointNames(nodeId);
-    await deleteDashboardItem("matter", nodeId);
+    await deleteDashboardDevice("matter", nodeId);
   } catch (error) {
     console.error("[db] 커스텀 이름/메인 표시 삭제 실패:", error);
   }

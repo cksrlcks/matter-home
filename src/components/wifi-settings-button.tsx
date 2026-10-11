@@ -27,7 +27,7 @@ export function WifiSettingsButton() {
     <>
       <Button variant="outline" onClick={() => setOpen(true)}>
         <Wifi className="h-4 w-4" />
-        Wi-Fi 설정
+        설정
       </Button>
       {/* Dialog는 닫히면 children을 렌더하지 않으므로 폼 상태는 닫을 때마다 초기화된다. */}
       <Dialog open={open} onClose={() => setOpen(false)}>

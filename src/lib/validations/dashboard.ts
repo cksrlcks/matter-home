@@ -16,11 +16,38 @@ export const groupIdSchema = z.coerce.number().int().positive();
 // RFC-4122 버전/변형 비트가 맞지 않아 z.uuid()에 걸리므로 형태만 검사하는 z.guid()를 쓴다.
 export const smartThingsDeviceIdSchema = z.guid();
 
-export const dashboardItemKeySchema = z.discriminatedUnion("source", [
-  z.object({ source: z.literal("matter"), deviceId: z.string().regex(/^\d{1,20}$/) }),
-  z.object({ source: z.literal("smartthings"), deviceId: smartThingsDeviceIdSchema }),
-]);
-
-export const dashboardItemBodySchema = z.object({
+const tileBase = {
+  // null = 기기 전체, 숫자 = 다구 스위치의 구(endpoint)
+  endpointId: z.number().int().nonnegative().nullable(),
   groupId: groupIdSchema.nullable(),
+};
+
+// 메인 화면 타일 전체(화면 순서). 같은 타일이 두 번 들어오면 거절한다.
+export const dashboardLayoutSchema = z.object({
+  items: z
+    .array(
+      z.discriminatedUnion("source", [
+        z.object({
+          source: z.literal("matter"),
+          deviceId: z.string().regex(/^\d{1,20}$/),
+          ...tileBase,
+        }),
+        z.object({
+          source: z.literal("smartthings"),
+          deviceId: smartThingsDeviceIdSchema,
+          ...tileBase,
+        }),
+      ]),
+    )
+    .max(500)
+    .refine(
+      (items) =>
+        new Set(items.map((i) => `${i.source}:${i.deviceId}:${i.endpointId}`))
+          .size === items.length,
+      "같은 타일이 중복되었습니다.",
+    ),
+});
+
+export const groupOrderSchema = z.object({
+  ids: z.array(groupIdSchema).max(200),
 });

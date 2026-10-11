@@ -9,7 +9,7 @@ import {
 import type {
   DashboardDto,
   DashboardGroupDto,
-  DeviceSource,
+  DashboardItemDto,
 } from "@/types/dashboard";
 
 export const dashboardKeys = {
@@ -29,9 +29,10 @@ async function request<T>(url: string, init: RequestInit, fallback: string): Pro
   return (res.status === 204 ? undefined : await res.json()) as T;
 }
 
-export function useDashboard() {
+export function useDashboard(initialData?: DashboardDto) {
   return useQuery({
     queryKey: dashboardKeys.detail(),
+    initialData,
     queryFn: () =>
       request<DashboardDto>("/api/dashboard", {}, "메인 구성을 불러오지 못했습니다."),
   });
@@ -99,40 +100,38 @@ export function useDeleteGroup() {
     (id: number) =>
       request(`/api/dashboard/groups/${id}`, { method: "DELETE" }, "그룹 삭제에 실패했습니다."),
     (old, id) => ({
+      ...old,
       groups: old.groups.filter((g) => g.id !== id),
       items: old.items.map((i) => (i.groupId === id ? { ...i, groupId: null } : i)),
     }),
   );
 }
 
-type ItemKey = { source: DeviceSource; deviceId: string };
-const itemUrl = ({ source, deviceId }: ItemKey) =>
-  `/api/dashboard/items/${source}/${encodeURIComponent(deviceId)}`;
-const sameItem = (a: ItemKey, b: ItemKey) =>
-  a.source === b.source && a.deviceId === b.deviceId;
-
-// 메인에 추가 또는 그룹 변경
-export function useSetDashboardItem() {
+// 메인 화면 타일 전체(화면 순서)를 저장한다. 순서 변경·그룹 이동·숨기기·묶기/풀기 공통.
+// 새 배열은 lib/dashboard-layout.ts의 함수로 만든다.
+export function useSaveLayout() {
   return useDashboardMutation(
-    ({ groupId, ...key }: ItemKey & { groupId: number | null }) =>
+    (items: DashboardItemDto[]) =>
       request(
-        itemUrl(key),
-        { method: "PUT", body: JSON.stringify({ groupId }) },
-        "메인 표시 설정에 실패했습니다.",
+        "/api/dashboard/layout",
+        { method: "PUT", body: JSON.stringify({ items }) },
+        "메인 구성 저장에 실패했습니다.",
       ),
-    (old, item) => ({
-      ...old,
-      items: old.items.some((i) => sameItem(i, item))
-        ? old.items.map((i) => (sameItem(i, item) ? item : i))
-        : [...old.items, item],
-    }),
+    (old, items) => ({ ...old, items }),
   );
 }
 
-export function useRemoveDashboardItem() {
+export function useReorderGroups() {
   return useDashboardMutation(
-    (key: ItemKey) =>
-      request(itemUrl(key), { method: "DELETE" }, "메인 표시 해제에 실패했습니다."),
-    (old, key) => ({ ...old, items: old.items.filter((i) => !sameItem(i, key)) }),
+    (ids: number[]) =>
+      request(
+        "/api/dashboard/groups/order",
+        { method: "PUT", body: JSON.stringify({ ids }) },
+        "그룹 순서 변경에 실패했습니다.",
+      ),
+    (old, ids) => ({
+      ...old,
+      groups: ids.flatMap((id) => old.groups.find((g) => g.id === id) ?? []),
+    }),
   );
 }

@@ -21,7 +21,7 @@ function deviceIcon(device: DeviceDto) {
 
 type Props = {
   device: DeviceDto;
-  /** 기기관리 화면: 이름 변경·제거·측정값·메인 표시 설정을 노출 */
+  /** 기기 탭: 이름 변경·제거·측정값·홈 표시 설정을 노출 */
   manage?: boolean;
   className?: string;
 };
@@ -87,7 +87,13 @@ export function DeviceCard({ device, manage, className }: Props) {
       }
       value={watts && <TileValue value={num} unit={unit} />}
       footer={
-        manage && <DashboardControl source="matter" deviceId={device.nodeId} />
+        manage && (
+          <DashboardControl
+            source="matter"
+            deviceId={device.nodeId}
+            endpointIds={switches.map((sw) => sw.endpointId)}
+          />
+        )
       }
       className={className}
     >
@@ -109,11 +115,22 @@ export function DeviceCard({ device, manage, className }: Props) {
               ) : (
                 <span className="truncate text-sm font-medium">{sw.name}</span>
               )}
-              <PowerSwitch
-                nodeId={device.nodeId}
-                power={sw}
-                disabled={!device.online}
-              />
+              <div className="flex shrink-0 items-center gap-1">
+                {manage && (
+                  <DashboardControl
+                    source="matter"
+                    deviceId={device.nodeId}
+                    endpointIds={switches.map((s) => s.endpointId)}
+                    endpointId={sw.endpointId}
+                    label={sw.name}
+                  />
+                )}
+                <PowerSwitch
+                  nodeId={device.nodeId}
+                  power={sw}
+                  disabled={!device.online}
+                />
+              </div>
             </li>
           ))}
         </ul>

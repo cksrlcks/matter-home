@@ -14,6 +14,7 @@ type DialogProps = {
 
 // 경량 모달. shadcn/Radix 대신 프로젝트 UI 톤에 맞춘 커스텀 구현.
 // 닫기는 하단 취소 버튼/백드롭/ESC로만 (상단 X 아이콘 사용 안 함).
+// 폰에서는 아래에서 올라오는 시트, sm 이상에서는 가운데 모달.
 // body에 포털로 그린다 — transform이 걸린 조상(hover 중인 타일 등) 안에서 fixed가 갇히지 않도록.
 export function Dialog({ open, onClose, children, className }: DialogProps) {
   useEffect(() => {
@@ -34,7 +35,7 @@ export function Dialog({ open, onClose, children, className }: DialogProps) {
 
   return createPortal(
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      className="fixed inset-0 z-50 flex items-end justify-center sm:items-center sm:p-4"
       role="dialog"
       aria-modal="true"
     >
@@ -45,7 +46,7 @@ export function Dialog({ open, onClose, children, className }: DialogProps) {
       />
       <div
         className={cn(
-          "relative z-10 w-full max-w-md rounded-2xl bg-card p-6 text-card-foreground shadow-lg",
+          "relative z-10 max-h-[88dvh] w-full max-w-md overflow-y-auto rounded-t-3xl border-2 border-b-0 border-ink bg-card p-6 pb-[max(1.5rem,env(safe-area-inset-bottom))] text-card-foreground sm:rounded-3xl sm:border-b-2 sm:pb-6 sm:shadow-lg",
           className,
         )}
       >

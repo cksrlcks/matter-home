@@ -1,17 +1,6 @@
-import { connection } from "next/server";
+import { redirect } from "next/navigation";
 
-import { GroupManager } from "@/components/group-manager";
-
-export default async function GroupsPage() {
-  // 빌드 시점이 아니라 요청 시점의 env를 읽도록 동적 렌더링
-  await connection();
-  if (process.env.EXTERNAL_MODE === "true") {
-    return (
-      <p className="text-sm text-muted-foreground">
-        외부 환경 모드입니다. 그룹 설정은 표시되지 않습니다.
-      </p>
-    );
-  }
-
-  return <GroupManager />;
+// 그룹 관리는 설정 탭으로 옮겼다. 예전 주소로 들어오면 설정으로 보낸다.
+export default function GroupsPage() {
+  redirect("/settings");
 }

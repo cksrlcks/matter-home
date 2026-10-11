@@ -43,6 +43,13 @@
       "when": 1791688042647,
       "tag": "0005_device_endpoint_names",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1791700166460,
+      "tag": "0006_dashboard_tiles",
+      "breakpoints": true
     }
   ]
 }

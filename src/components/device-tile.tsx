@@ -24,12 +24,12 @@ type Props = {
   linkLabel?: string;
   /** 본문 아래 추가 행 (측정값 등) */
   children?: ReactNode;
-  /** 구분선 아래 하단 행 (메인 표시 설정 등). href 화살표와 같은 줄에 놓인다 */
+  /** 구분선 아래 하단 행 (홈 표시 설정 등). href 화살표와 같은 줄에 놓인다 */
   footer?: ReactNode;
   className?: string;
 };
 
-// 메인·기기관리 공용 디바이스 타일. 색이 곧 상태 — 켜짐만 네이비 틴트 + 네이비 테두리, 오프라인은 점선.
+// 기기 탭의 디바이스 카드. 색이 곧 상태 — 켜짐은 노랑 바탕, 오프라인은 점선. (홈 타일은 StickerTile)
 // data-state를 노출해 자식(EnergyStats 등)이 group-data-[state=on]으로 톤을 맞출 수 있다.
 export function DeviceTile({
   state,
@@ -48,17 +48,17 @@ export function DeviceTile({
     <Card
       data-state={state}
       className={cn(
-        "group flex min-h-40 flex-col gap-3 p-4 transition-[box-shadow,transform] hover:-translate-y-px hover:shadow-md",
-        state === "on" && "border-secondary bg-accent-soft",
-        state === "offline" && "border-dashed",
+        "group flex min-h-40 flex-col gap-3 p-4",
+        state === "on" && "bg-accent-soft",
+        state === "offline" && "border-dashed shadow-none",
         className,
       )}
     >
       <div className="flex items-start justify-between gap-2">
         <span
           className={cn(
-            "inline-flex size-10 shrink-0 items-center justify-center rounded-lg bg-muted text-foreground [&_svg]:size-5",
-            state === "on" && "bg-secondary text-secondary-foreground",
+            "inline-flex size-10 shrink-0 items-center justify-center rounded-xl border-2 border-ink bg-muted text-foreground [&_svg]:size-5",
+            state === "on" && "bg-tile-light text-tile-ink",
             state === "offline" && "text-muted-foreground",
           )}
         >

@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 
+import { SceneArt } from "@/components/device-art";
 import { LoginForm } from "@/components/login-form";
 
 export const metadata = {
@@ -9,9 +10,10 @@ export const metadata = {
 export default function LoginPage() {
   return (
     <main className="flex min-h-dvh items-center justify-center p-4">
-      <div className="w-full max-w-sm rounded-2xl border border-border bg-card p-6 shadow-sm">
-        <div className="mb-6 text-center">
-          <h1 className="text-xl font-bold">Matter Home</h1>
+      <div className="sticker w-full max-w-sm rounded-3xl bg-card p-6">
+        <div className="mb-6 flex flex-col items-center text-center">
+          <SceneArt scene="house" className="mb-2 size-28" />
+          <h1 className="text-2xl">우리집</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             로그인이 필요합니다.
           </p>

@@ -1,59 +1,62 @@
 @import "tailwindcss";
 
 /*
-  디자인 토큰 — DESIGN.md(canonical) → 프로젝트 유틸 이름 매핑
-  기존 shadcn식 유틸 이름(bg-card, text-muted-foreground …)은 유지하고 값만 교체했다.
+  디자인 토큰 — "스티커 타일" 테마 (DESIGN.md)
+  크림 배경 위에 잉크 외곽선 + 딱 떨어지는 그림자가 붙은 원색 타일.
+  shadcn식 유틸 이름(bg-card, text-muted-foreground …)은 유지하고 값만 바꿨다.
 
-  canonical(DESIGN.md)     @theme 유틸               raw 변수
-  --color-bg               bg-background             --background
-  --color-bg-soft          bg-muted                  --muted
-  --color-surface          bg-card                   --card
-  --color-text             text-foreground           --foreground
-  --color-muted            text-muted-foreground     --muted-foreground
-  --color-border           border-border             --border
-  --color-primary          bg-primary                --primary
-  --color-primary-strong   bg-primary-strong         --primary-strong
-  --color-secondary        bg-secondary (네이비)     --secondary
-  --color-accent-soft      bg-accent-soft (켜짐)     --accent-soft
-  --color-success/warning/danger/info  동일          동일
-  포커스 링(ring)은 info 색을 쓴다.
+  bg-background  페이지(크림)         bg-card      카드·인풋·다이얼로그
+  bg-muted       패널·꺼진 타일        border-border 얇은 구분선
+  border-ink     스티커 외곽선·그림자   bg-primary   주요 버튼(잉크)
+  bg-accent-soft 선택·켜짐 강조(노랑)   bg-tile-*    기기 종류별 타일 색(켜짐)
 */
 :root {
-  --background: #f4f5f2;
-  --foreground: #1a1c1e;
-  --card: #ffffff;
-  --card-foreground: #1a1c1e;
-  --muted: #eaece7;
-  --muted-foreground: #5f6773;
-  --border: #e1e4df;
-  --primary: #202327;
-  --primary-strong: #0d0f11;
-  --primary-foreground: #ffffff;
-  --secondary: #1b2f5e;
-  --secondary-foreground: #ffffff;
-  --accent-soft: #e6ecf7;
+  --background: #fff4dc;
+  --foreground: #1b1b1b;
+  --card: #fffdf6;
+  --card-foreground: #1b1b1b;
+  --muted: #f4e7c6;
+  --muted-foreground: #6b6250;
+  --border: #e3d3a8;
+  --ink: #1b1b1b;
+  --primary: #1b1b1b;
+  --primary-strong: #000000;
+  --primary-foreground: #fff4dc;
+  --secondary: #1b1b1b;
+  --secondary-foreground: #ffd23f;
+  --accent-soft: #ffe58a;
   --success: #15803d;
-  --warning: #dc6803;
+  --warning: #c2570a;
   --danger: #dc2626;
   --info: #2563eb;
   --ring: #2563eb;
+
+  /* 타일 색은 라이트/다크 공통. 타일 위 글자는 항상 잉크(--tile-ink). */
+  --tile-ink: #1b1b1b;
+  --tile-light: #ffd23f;
+  --tile-plug: #ff8fb1;
+  --tile-switch: #8ec5ff;
+  --tile-camera: #b7e36b;
+  --tile-tv: #c5a8ff;
+  --tile-other: #ffb067;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #101214;
-    --foreground: #eceeea;
-    --card: #1d2024;
-    --card-foreground: #eceeea;
-    --muted: #181b1e;
-    --muted-foreground: #9aa3ae;
-    --border: #2a2e33;
-    --primary: #f2f3f0;
+    --background: #1f1b14;
+    --foreground: #fff4dc;
+    --card: #2b261d;
+    --card-foreground: #fff4dc;
+    --muted: #383123;
+    --muted-foreground: #bdb198;
+    --border: #4d4433;
+    --ink: #000000;
+    --primary: #fff4dc;
     --primary-strong: #ffffff;
-    --primary-foreground: #1a1c1e;
-    --secondary: #7ea2f0;
-    --secondary-foreground: #ffffff;
-    --accent-soft: #1b2540;
+    --primary-foreground: #1b1b1b;
+    --secondary: #ffd23f;
+    --secondary-foreground: #1b1b1b;
+    --accent-soft: #4e4213;
     --success: #4ade80;
     --warning: #fdba74;
     --danger: #f87171;
@@ -70,6 +73,7 @@
   --color-muted: var(--muted);
   --color-muted-foreground: var(--muted-foreground);
   --color-border: var(--border);
+  --color-ink: var(--ink);
   --color-primary: var(--primary);
   --color-primary-strong: var(--primary-strong);
   --color-primary-foreground: var(--primary-foreground);
@@ -81,24 +85,32 @@
   --color-warning: var(--warning);
   --color-danger: var(--danger);
   --color-info: var(--info);
+  --color-tile-ink: var(--tile-ink);
+  --color-tile-light: var(--tile-light);
+  --color-tile-plug: var(--tile-plug);
+  --color-tile-switch: var(--tile-switch);
+  --color-tile-camera: var(--tile-camera);
+  --color-tile-tv: var(--tile-tv);
+  --color-tile-other: var(--tile-other);
 }
 
-/* 타이포·섀도우 스케일 (DESIGN.md). --font-pretendard 는 next/font/local이 <html>에 주입한다.
-   라운드는 Tailwind 기본 스케일을 그대로 쓴다: sm 8px=rounded-lg, md 12px=rounded-xl, lg 16px=rounded-2xl */
+/* 서체·그림자 스케일. --font-pretendard / --font-jua 는 next/font가 <html>에 주입한다.
+   그림자는 흐림 없이 잉크색으로 딱 떨어진다(스티커). */
 @theme {
   --font-sans:
     var(--font-pretendard), "Pretendard Variable", "Pretendard", -apple-system,
     BlinkMacSystemFont, system-ui, "Apple SD Gothic Neo", "Noto Sans KR",
     sans-serif;
+  --font-display: var(--font-jua), var(--font-sans);
   --text-2xl: 26px;
   --text-2xl--line-height: 1.15;
   --text-3xl: 32px;
   --text-3xl--line-height: 1.15;
   --text-4xl: 44px;
   --text-4xl--line-height: 1;
-  --shadow-sm: 0 1px 2px rgb(26 28 30 / 0.05);
-  --shadow-md: 0 4px 14px rgb(26 28 30 / 0.07);
-  --shadow-lg: 0 14px 36px rgb(26 28 30 / 0.12);
+  --shadow-sm: 2px 2px 0 var(--ink);
+  --shadow-md: 3px 3px 0 var(--ink);
+  --shadow-lg: 5px 5px 0 var(--ink);
 }
 
 body {
@@ -107,8 +119,50 @@ body {
   font-family: var(--font-sans);
 }
 
-/* 키보드 포커스 링 (DESIGN.md: 2px info, offset 2px) */
+/* 제목은 둥근 디스플레이 서체. 단일 굵기라 가짜 볼드 합성은 끈다. */
+h1,
+h2,
+h3 {
+  font-family: var(--font-display);
+  font-synthesis-weight: none;
+}
+
+/* 키보드 포커스 링 */
 :focus-visible {
   outline: 2px solid var(--info);
   outline-offset: 2px;
+}
+
+/* 스티커: 잉크 외곽선 + 딱 떨어지는 그림자 */
+@utility sticker {
+  border: 2px solid var(--ink);
+  box-shadow: 3px 3px 0 var(--ink);
+}
+
+/* 누르면 그림자 쪽으로 눌린다 */
+@utility sticker-press {
+  transition:
+    transform 80ms ease-out,
+    box-shadow 80ms ease-out;
+  &:active:not(:disabled) {
+    transform: translate(3px, 3px);
+    box-shadow: 0 0 0 var(--ink);
+  }
+}
+
+/* 편집 모드에서 타일이 살짝 흔들린다 */
+@keyframes wiggle {
+  0%,
+  100% {
+    rotate: -1.2deg;
+  }
+  50% {
+    rotate: 1.2deg;
+  }
+}
+@utility animate-wiggle {
+  animation: wiggle 320ms ease-in-out infinite;
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
 }

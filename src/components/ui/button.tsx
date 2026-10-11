@@ -6,11 +6,13 @@ export type ButtonVariant = "default" | "outline" | "ghost" | "danger";
 export type ButtonSize = "default" | "sm" | "icon" | "icon-sm";
 
 const VARIANT: Record<ButtonVariant, string> = {
-  // 화면당 primary(잉크) 1개. 네이비(secondary)는 버튼 배경으로 쓰지 않는다.
-  default: "bg-primary text-primary-foreground hover:bg-primary-strong",
-  outline: "border-border bg-card text-foreground hover:bg-muted",
-  ghost: "text-muted-foreground hover:bg-muted hover:text-foreground",
-  danger: "bg-danger text-white hover:bg-danger/90",
+  // ghost를 뺀 버튼은 스티커(잉크 외곽선 + 그림자)이고 누르면 눌린다.
+  default:
+    "sticker-press border-ink bg-primary text-primary-foreground shadow-sm hover:bg-primary-strong",
+  outline:
+    "sticker-press border-ink bg-card text-foreground shadow-sm hover:bg-muted",
+  ghost: "border-transparent text-muted-foreground hover:bg-muted hover:text-foreground",
+  danger: "sticker-press border-ink bg-danger text-white shadow-sm hover:bg-danger/90",
 };
 
 const SIZE: Record<ButtonSize, string> = {
@@ -31,7 +33,7 @@ export function buttonClassName({
   className?: string;
 } = {}) {
   return cn(
-    "inline-flex shrink-0 items-center justify-center gap-2 border border-transparent font-semibold whitespace-nowrap transition-colors disabled:pointer-events-none disabled:opacity-45 [&_svg]:size-4 [&_svg]:shrink-0",
+    "inline-flex shrink-0 items-center justify-center gap-2 border-2 font-semibold whitespace-nowrap transition-colors disabled:pointer-events-none disabled:opacity-45 [&_svg]:size-4 [&_svg]:shrink-0",
     VARIANT[variant],
     SIZE[size],
     className,

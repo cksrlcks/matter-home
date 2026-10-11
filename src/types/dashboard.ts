@@ -8,16 +8,22 @@ export type DashboardGroupDto = {
   name: string;
 };
 
+// 메인 화면의 타일 하나.
 export type DashboardItemDto = {
   source: DeviceSource;
   deviceId: string;
+  /**
+   * null이면 기기 전체가 한 타일(다구 스위치는 "묶어서 보기").
+   * 숫자면 다구 스위치의 구(endpoint) 하나가 독립 타일("풀어서 보기").
+   */
+  endpointId: number | null;
   /** 그룹 미지정이면 null */
   groupId: number | null;
 };
 
 export type DashboardDto = {
-  /** 생성 순 */
+  /** 화면 순서대로 */
   groups: DashboardGroupDto[];
-  /** 추가된 순 */
+  /** 화면 순서대로 (그룹을 가로질러 하나의 순서) */
   items: DashboardItemDto[];
 };

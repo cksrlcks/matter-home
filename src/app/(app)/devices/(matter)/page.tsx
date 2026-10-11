@@ -2,6 +2,7 @@ import { connection } from "next/server";
 
 import { AddDeviceButton } from "@/components/add-device-button";
 import { DeviceList } from "@/components/device-list";
+import { WifiSettingsButton } from "@/components/wifi-settings-button";
 
 export default async function MatterDevicesPage() {
   await connection();
@@ -15,7 +16,8 @@ export default async function MatterDevicesPage() {
 
   return (
     <>
-      <div className="mb-4 flex justify-end">
+      <div className="mb-4 flex justify-end gap-2">
+        <WifiSettingsButton />
         <AddDeviceButton />
       </div>
       <DeviceList />

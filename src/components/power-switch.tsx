@@ -4,11 +4,11 @@ import { toast } from "sonner";
 
 import { PowerButton } from "@/components/ui/power-button";
 import { usePowerMutation } from "@/hooks/use-devices";
-import type { DevicePowerDto } from "@/types/matter";
+import type { DeviceSwitchDto } from "@/types/matter";
 
 type Props = {
   nodeId: string;
-  power: DevicePowerDto;
+  power: DeviceSwitchDto;
   disabled?: boolean;
 };
 
@@ -21,7 +21,7 @@ export function PowerSwitch({ nodeId, power, disabled }: Props) {
 
   const handleToggle = () => {
     mutation.mutate(
-      { nodeId, state: !isOn },
+      { nodeId, endpointId: power.endpointId, state: !isOn },
       {
         onError: (error) => {
           toast.error(

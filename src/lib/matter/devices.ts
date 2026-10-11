@@ -6,10 +6,15 @@ import type {
   DeviceDto,
   DeviceEndpointDto,
   DeviceEnergyDto,
-  DevicePowerDto,
+  DeviceSwitchDto,
 } from "@/types/matter";
 
 import { deleteDashboardItem } from "@/lib/db/dashboard";
+import {
+  deleteEndpointNames,
+  endpointNameKey,
+  getEndpointNameMap,
+} from "@/lib/db/device-endpoint-names";
 import { deleteDeviceName, getDeviceNameMap } from "@/lib/db/device-names";
 
 import { getMatterClient } from "./client";
@@ -69,19 +74,26 @@ function onOffEndpoints(node: MatterNode): number[] {
   return ids.sort((a, b) => a - b);
 }
 
-// 제어 대상 endpoint를 고른다. GRILLPLATS 기준 endpoint 1을 우선한다.
-function pickOnOffEndpoint(node: MatterNode): number | null {
-  const ids = onOffEndpoints(node);
-  if (ids.length === 0) return null;
-  return ids.includes(1) ? 1 : ids[0];
-}
-
-function readPower(node: MatterNode): DevicePowerDto | null {
-  const endpointId = pickOnOffEndpoint(node);
-  if (endpointId === null) return null;
-  const raw =
-    node.attributes[`${endpointId}/${ONOFF_CLUSTER_ID}/${ONOFF_ATTR_ID}`];
-  return { endpointId, on: raw === true };
+// OnOff endpoint마다 스위치 하나. 다구 스위치는 한 node에 endpoint가 여러 개다.
+function readSwitches(
+  node: MatterNode,
+  endpointNames: Map<string, string>,
+): DeviceSwitchDto[] {
+  const nodeId = String(node.node_id);
+  return onOffEndpoints(node).map((endpointId, index) => {
+    const defaultName = `스위치 ${index + 1}`;
+    const customName =
+      endpointNames.get(endpointNameKey(nodeId, endpointId)) ?? null;
+    return {
+      endpointId,
+      on:
+        node.attributes[`${endpointId}/${ONOFF_CLUSTER_ID}/${ONOFF_ATTR_ID}`] ===
+        true,
+      name: customName ?? defaultName,
+      defaultName,
+      customName,
+    };
+  });
 }
 
 // int64 attribute는 number / bigint / 문자열 중 하나로 올 수 있다.
@@ -156,13 +168,29 @@ function toEndpointDtos(node: MatterNode): DeviceEndpointDto[] {
   }));
 }
 
-function toDeviceDto(
-  node: MatterNode,
-  nameOverrides: Map<string, string>,
-): DeviceDto {
+type NameOverrides = {
+  devices: Map<string, string>;
+  endpoints: Map<string, string>;
+};
+
+// 커스텀 이름은 부가 정보. DB가 잠깐 죽어도 기기 목록은 계속 반환한다.
+async function loadNameOverrides(): Promise<NameOverrides> {
+  try {
+    const [devices, endpoints] = await Promise.all([
+      getDeviceNameMap(),
+      getEndpointNameMap(),
+    ]);
+    return { devices, endpoints };
+  } catch (error) {
+    console.error("[db] 커스텀 이름 조회 실패:", error);
+    return { devices: new Map(), endpoints: new Map() };
+  }
+}
+
+function toDeviceDto(node: MatterNode, names: NameOverrides): DeviceDto {
   const nodeId = String(node.node_id);
   const matterName = node.nodeLabel || node.productName || `Node ${nodeId}`;
-  const customName = nameOverrides.get(nodeId) ?? null;
+  const customName = names.devices.get(nodeId) ?? null;
   return {
     nodeId,
     name: customName ?? matterName,
@@ -172,7 +200,7 @@ function toDeviceDto(
     productName: node.productName || undefined,
     online: node.available,
     endpoints: toEndpointDtos(node),
-    power: readPower(node),
+    switches: readSwitches(node, names.endpoints),
     energy: readEnergy(node),
   };
 }
@@ -183,17 +211,11 @@ export async function getDevices(): Promise<DeviceDto[]> {
   // 갱신되는 로컬 캐시다. getNodes()로 매번 get_nodes를 왕복하지 않고 캐시를 읽는다.
   const nodes = Object.values(client.nodes);
 
-  // 커스텀 이름은 부가 정보. DB가 잠깐 죽어도 기기 목록은 계속 반환한다.
-  let nameOverrides = new Map<string, string>();
-  try {
-    nameOverrides = await getDeviceNameMap();
-  } catch (error) {
-    console.error("[db] 커스텀 이름 조회 실패:", error);
-  }
+  const names = await loadNameOverrides();
 
   return nodes
     .filter((node) => !isTestNodeId(node.node_id))
-    .map((node) => toDeviceDto(node, nameOverrides));
+    .map((node) => toDeviceDto(node, names));
 }
 
 export type EnergyReading = {
@@ -255,7 +277,8 @@ export class CommissioningInProgressError extends Error {
 }
 
 // 새 Matter 기기 commissioning.
-// Raspberry Pi의 BLE로 페어링 후 저장된 Thread credential(default)로 네트워크에 조인한다.
+// Raspberry Pi의 BLE로 페어링 후 저장된 Thread/Wi-Fi credential(default)로 네트워크에 조인한다.
+// (Wi-Fi 기기용 credential은 기기관리의 Wi-Fi 설정에서 저장한다 — lib/matter/wifi.ts)
 // BLE + Thread 조인까지 수 분 걸릴 수 있다. (client 기본 timeout 5분)
 export async function commissionDevice(rawCode: string): Promise<DeviceDto> {
   // 이미 진행 중이면 새 attempt를 시작하지 않는다. (BLE 병렬 충돌 방지)
@@ -272,15 +295,7 @@ export async function commissionDevice(rawCode: string): Promise<DeviceDto> {
     // (기본값 true는 이미 네트워크에 올라온 기기만 찾으므로 신규 페어링이 안 된다.)
     const node = await client.commissionWithCode(code, false);
 
-    // 커스텀 이름은 부가 정보. DB가 잠깐 죽어도 추가된 기기는 반환한다.
-    let nameOverrides = new Map<string, string>();
-    try {
-      nameOverrides = await getDeviceNameMap();
-    } catch (error) {
-      console.error("[db] 커스텀 이름 조회 실패:", error);
-    }
-
-    return toDeviceDto(node, nameOverrides);
+    return toDeviceDto(node, await loadNameOverrides());
   } finally {
     globalForCommission.__commissioning = false;
   }
@@ -297,31 +312,56 @@ export async function removeDevice(nodeId: string): Promise<void> {
   // 이름/메인 표시 삭제는 부가 작업. 실패해도 기기 제거 자체는 성공으로 취급한다.
   try {
     await deleteDeviceName(nodeId);
+    await deleteEndpointNames(nodeId);
     await deleteDashboardItem("matter", nodeId);
   } catch (error) {
     console.error("[db] 커스텀 이름/메인 표시 삭제 실패:", error);
   }
 }
 
+export class UnknownSwitchEndpointError extends Error {
+  constructor(nodeId: string, endpointId: number) {
+    super(`기기(${nodeId})에 On/Off endpoint ${endpointId}가 없습니다.`);
+    this.name = "UnknownSwitchEndpointError";
+  }
+}
+
+// endpointId를 생략하면 첫 번째 On/Off endpoint를 제어한다. (1구 기기)
 export async function setDevicePower(
   nodeId: string,
   on: boolean,
-): Promise<DevicePowerDto> {
+  endpointId?: number,
+): Promise<{ endpointId: number; on: boolean }> {
   const client = await getMatterClient();
   const node = await findNode(nodeId);
 
-  const endpointId = pickOnOffEndpoint(node);
-  if (endpointId === null) {
+  const ids = onOffEndpoints(node);
+  if (ids.length === 0) {
     throw new Error(`기기(${nodeId})는 On/Off를 지원하지 않습니다.`);
+  }
+  const target = endpointId ?? ids[0];
+  if (!ids.includes(target)) {
+    throw new UnknownSwitchEndpointError(nodeId, target);
   }
 
   // OnOff cluster(6)의 on/off 커맨드. node.node_id는 number|bigint 원본을 그대로 넘긴다.
   await client.deviceCommand(
     node.node_id,
-    endpointId,
+    target,
     ONOFF_CLUSTER_ID,
     on ? "on" : "off",
   );
 
-  return { endpointId, on };
+  return { endpointId: target, on };
+}
+
+// 이름을 붙이려는 endpoint가 실제 On/Off endpoint인지 확인한다.
+export async function assertSwitchEndpoint(
+  nodeId: string,
+  endpointId: number,
+): Promise<void> {
+  const node = await findNode(nodeId);
+  if (!onOffEndpoints(node).includes(endpointId)) {
+    throw new UnknownSwitchEndpointError(nodeId, endpointId);
+  }
 }

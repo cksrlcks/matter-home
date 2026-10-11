@@ -26,6 +26,23 @@ export const deviceNames = pgTable("device_names", {
 
 export type DeviceNameRow = typeof deviceNames.$inferSelect;
 
+// 다구 스위치처럼 한 node에 On/Off endpoint가 여러 개일 때, endpoint(구)별 사용자 지정 이름.
+export const deviceEndpointNames = pgTable(
+  "device_endpoint_names",
+  {
+    nodeId: text("node_id").notNull(),
+    endpointId: integer("endpoint_id").notNull(),
+    name: text("name").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => [primaryKey({ columns: [table.nodeId, table.endpointId] })],
+);
+
 // SmartThings 기기별 앱 내 표시 이름. SmartThings 쪽 label은 건드리지 않는다.
 export const smartthingsDeviceNames = pgTable("smartthings_device_names", {
   deviceId: text("device_id").primaryKey(),

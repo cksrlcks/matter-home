@@ -6,10 +6,16 @@ export type DeviceEndpointDto = {
   deviceType?: string;
 };
 
-export type DevicePowerDto = {
-  /** OnOff cluster가 붙어 있는 endpoint (GRILLPLATS는 1) */
+export type DeviceSwitchDto = {
+  /** OnOff cluster가 붙어 있는 endpoint (GRILLPLATS는 1, 3구 스위치는 1·2·3) */
   endpointId: number;
   on: boolean;
+  /** 표시 이름: 사용자 지정(customName)이 있으면 그것, 없으면 defaultName */
+  name: string;
+  /** 기본 이름 ("스위치 1" 등, 초기화 시 사용) */
+  defaultName: string;
+  /** DB에 저장된 사용자 지정 이름. 없으면 null */
+  customName: string | null;
   /**
    * 클라이언트 전용 임시 플래그. 사용자가 누른 값을 서버가 아직 반영하지 못해
    * 낙관값을 유지 중일 때 true. (서버는 설정하지 않음)
@@ -74,8 +80,14 @@ export type DeviceDto = {
   productName?: string;
   online: boolean;
   endpoints: DeviceEndpointDto[];
-  /** OnOff cluster가 없는 기기는 null */
-  power: DevicePowerDto | null;
+  /** OnOff endpoint별 스위치 (endpoint 오름차순). OnOff cluster가 없는 기기는 빈 배열 */
+  switches: DeviceSwitchDto[];
   /** 전력 측정을 지원하지 않는 기기는 null */
   energy: DeviceEnergyDto | null;
+};
+
+/** matter-server에 저장된 Wi-Fi (Wi-Fi 기기 commissioning용). 비밀번호는 노출하지 않는다. */
+export type WifiCredentialsDto = {
+  /** 저장된 Wi-Fi가 없으면 null */
+  ssid: string | null;
 };

@@ -2,11 +2,18 @@ import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 
 import { getSession } from "@/lib/auth/session";
-import { setDevicePower } from "@/lib/matter/devices";
+import {
+  setDevicePower,
+  UnknownSwitchEndpointError,
+} from "@/lib/matter/devices";
 
 export const dynamic = "force-dynamic";
 
-const powerSchema = z.object({ state: z.boolean() });
+const powerSchema = z.object({
+  state: z.boolean(),
+  // 다구 스위치에서 제어할 endpoint. 생략하면 첫 번째 On/Off endpoint.
+  endpointId: z.number().int().nonnegative().optional(),
+});
 
 export async function POST(
   request: NextRequest,
@@ -31,8 +38,16 @@ export async function POST(
   }
 
   try {
-    const result = await setDevicePower(nodeId, parsed.data.state);
-    return NextResponse.json({ success: true, state: result.on });
+    const result = await setDevicePower(
+      nodeId,
+      parsed.data.state,
+      parsed.data.endpointId,
+    );
+    return NextResponse.json({
+      success: true,
+      endpointId: result.endpointId,
+      state: result.on,
+    });
   } catch (error) {
     return NextResponse.json(
       {
@@ -40,7 +55,7 @@ export async function POST(
         message:
           error instanceof Error ? error.message : "기기 제어에 실패했습니다.",
       },
-      { status: 502 },
+      { status: error instanceof UnknownSwitchEndpointError ? 404 : 502 },
     );
   }
 }

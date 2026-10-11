@@ -8,8 +8,14 @@ import {
   renameDeviceAction,
   resetDeviceNameAction,
 } from "@/app/(app)/devices/smartthings/actions";
-import { useRenameDevice, useResetDeviceName } from "@/hooks/use-devices";
+import {
+  useRenameDevice,
+  useRenameSwitch,
+  useResetDeviceName,
+  useResetSwitchName,
+} from "@/hooks/use-devices";
 import { Input } from "@/components/ui/input";
+import { cn } from "@/lib/utils";
 
 type EditableNameProps = {
   name: string;
@@ -18,6 +24,8 @@ type EditableNameProps = {
   customName: string | null;
   onRename: (name: string) => Promise<unknown>;
   onReset: () => Promise<unknown>;
+  /** title = 타일 제목(기본), row = 타일 안 스위치 행의 작은 이름 */
+  size?: "title" | "row";
 };
 
 // 앱 내 표시 이름 인라인 편집. 저장/초기화는 호출한 쪽(onRename/onReset)이 담당한다.
@@ -27,6 +35,7 @@ function EditableName({
   customName,
   onRename,
   onReset,
+  size = "title",
 }: EditableNameProps) {
   const [editing, setEditing] = useState(false);
   const [value, setValue] = useState(name);
@@ -95,7 +104,7 @@ function EditableName({
             if (e.key === "Enter") submit();
             if (e.key === "Escape") setEditing(false);
           }}
-          className="h-8"
+          className={cn("h-8", size === "row" && "min-w-0")}
         />
         <button
           type="button"
@@ -119,8 +128,12 @@ function EditableName({
   }
 
   return (
-    <div className="flex items-center gap-1.5">
-      <h2 className="truncate text-lg font-semibold">{name}</h2>
+    <div className="flex min-w-0 items-center gap-1.5">
+      {size === "title" ? (
+        <h2 className="truncate text-lg font-semibold">{name}</h2>
+      ) : (
+        <span className="truncate text-sm font-medium">{name}</span>
+      )}
       <button
         type="button"
         onClick={startEditing}
@@ -163,6 +176,37 @@ export function DeviceName({ nodeId, name, matterName, customName }: Props) {
       customName={customName}
       onRename={(next) => rename.mutateAsync({ nodeId, name: next })}
       onReset={() => reset.mutateAsync(nodeId)}
+    />
+  );
+}
+
+type SwitchNameProps = {
+  nodeId: string;
+  endpointId: number;
+  name: string;
+  defaultName: string;
+  customName: string | null;
+};
+
+// 다구 스위치의 구(endpoint)별 이름
+export function SwitchName({
+  nodeId,
+  endpointId,
+  name,
+  defaultName,
+  customName,
+}: SwitchNameProps) {
+  const rename = useRenameSwitch();
+  const reset = useResetSwitchName();
+
+  return (
+    <EditableName
+      size="row"
+      name={name}
+      defaultName={defaultName}
+      customName={customName}
+      onRename={(next) => rename.mutateAsync({ nodeId, endpointId, name: next })}
+      onReset={() => reset.mutateAsync({ nodeId, endpointId })}
     />
   );
 }

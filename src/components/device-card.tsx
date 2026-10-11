@@ -5,7 +5,7 @@ import { formatWatts, splitUnit } from "@/lib/energy";
 import type { DeviceDto } from "@/types/matter";
 
 import { DashboardControl } from "./dashboard-control";
-import { DeviceName } from "./device-name";
+import { DeviceName, SwitchName } from "./device-name";
 import { DeviceTile, TileValue } from "./device-tile";
 import { EnergyStats } from "./energy-stats";
 import { PowerSwitch } from "./power-switch";
@@ -27,7 +27,11 @@ type Props = {
 };
 
 export function DeviceCard({ device, manage, className }: Props) {
-  const state = !device.online ? "offline" : device.power?.on ? "on" : "off";
+  const { switches } = device;
+  // 1구는 타일 우상단 전원 버튼, 다구는 타일 안에 구별 행으로 표시한다.
+  const single = switches.length === 1 ? switches[0] : null;
+  const onCount = switches.filter((sw) => sw.on).length;
+  const state = !device.online ? "offline" : onCount > 0 ? "on" : "off";
 
   const watts =
     device.energy && device.online
@@ -35,11 +39,14 @@ export function DeviceCard({ device, manage, className }: Props) {
       : null;
   const [num, unit] = watts ? splitUnit(watts) : ["", ""];
 
-  const stateLabel = !device.power
-    ? "On/Off 미지원"
-    : device.power.on
-      ? "켜짐"
-      : "꺼짐";
+  const stateLabel =
+    switches.length === 0
+      ? "On/Off 미지원"
+      : !single
+        ? `${onCount}/${switches.length} 켜짐`
+        : single.on
+          ? "켜짐"
+          : "꺼짐";
 
   return (
     <DeviceTile
@@ -66,10 +73,10 @@ export function DeviceCard({ device, manage, className }: Props) {
       }
       actions={
         <>
-          {device.power && (
+          {single && (
             <PowerSwitch
               nodeId={device.nodeId}
-              power={device.power}
+              power={single}
               disabled={!device.online}
             />
           )}
@@ -84,6 +91,34 @@ export function DeviceCard({ device, manage, className }: Props) {
       }
       className={className}
     >
+      {switches.length > 1 && (
+        <ul className="flex flex-col gap-2 rounded-xl bg-muted px-4 py-3 group-data-[state=on]:bg-card/70">
+          {switches.map((sw) => (
+            <li
+              key={sw.endpointId}
+              className="flex items-center justify-between gap-2"
+            >
+              {manage ? (
+                <SwitchName
+                  nodeId={device.nodeId}
+                  endpointId={sw.endpointId}
+                  name={sw.name}
+                  defaultName={sw.defaultName}
+                  customName={sw.customName}
+                />
+              ) : (
+                <span className="truncate text-sm font-medium">{sw.name}</span>
+              )}
+              <PowerSwitch
+                nodeId={device.nodeId}
+                power={sw}
+                disabled={!device.online}
+              />
+            </li>
+          ))}
+        </ul>
+      )}
+
       {manage && device.energy && (
         <EnergyStats energy={device.energy} online={device.online} />
       )}

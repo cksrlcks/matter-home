@@ -15,7 +15,9 @@ matterjs-server의 WebSocket API를 호출하는 **UI/API 계층**만 담당합�
 - ✅ matterjs-server WebSocket 연결 (server-only 싱글턴)
 - ✅ `GET /api/devices` — commissioning 된 node 목록 조회 (DTO로 normalize)
 - ✅ 기기 카드 UI (이름 / 벤더 / Online 상태 / ON·OFF)
-- ✅ `POST /api/devices/:nodeId/power` — OnOff cluster(6) 제어
+- ✅ `POST /api/devices/:nodeId/power` — OnOff cluster(6) 제어 (`endpointId`로 다구 스위치의 구 지정)
+- ✅ Wi-Fi 설정 (`/api/matter/wifi`) — Wi-Fi 방식 Matter 기기 추가용 SSID/비밀번호를 matter-server에 저장 (앱 DB에는 저장하지 않음)
+- ✅ 다구 스위치 지원 — On/Off endpoint마다 개별 제어 + 구별 이름
 - ✅ React Query 기반 조회 + optimistic mutation + 3초 polling
 - ✅ loading / error UI
 - ✅ 임시 로그인(env 계정) + 세션 쿠키 + proxy 보호
@@ -67,7 +69,8 @@ npm run dev
 
 ## 데이터베이스 / 마이그레이션 (Drizzle)
 
-기기 이름은 `device_names` 테이블에 저장합니다. 스키마는
+기기 이름은 `device_names`, 다구 스위치의 구(endpoint)별 이름은
+`device_endpoint_names` 테이블에 저장합니다. 스키마는
 [`src/lib/db/schema.ts`](src/lib/db/schema.ts).
 
 ```bash
@@ -94,6 +97,7 @@ src/
 │   │       ├── route.ts                   # GET 목록
 │   │       └── [nodeId]/
 │   │           ├── route.ts               # PATCH(이름변경) / DELETE(초기화)
+│   │           ├── endpoints/[endpointId]/route.ts  # 구별 이름 PATCH / DELETE
 │   │           └── power/route.ts         # POST ON/OFF
 │   ├── login/page.tsx
 │   ├── page.tsx                           # 대시보드

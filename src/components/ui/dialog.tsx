@@ -40,16 +40,21 @@ export function Dialog({ open, onClose, children, className }: DialogProps) {
       aria-modal="true"
     >
       <div
-        className="absolute inset-0 bg-black/50"
+        className="absolute inset-0 bg-black/60"
         onClick={onClose}
         aria-hidden="true"
       />
       <div
         className={cn(
-          "relative z-10 max-h-[88dvh] w-full max-w-md overflow-y-auto rounded-t-3xl border-2 border-b-0 border-ink bg-card p-6 pb-[max(1.5rem,env(safe-area-inset-bottom))] text-card-foreground sm:rounded-3xl sm:border-b-2 sm:pb-6 sm:shadow-lg",
+          "relative z-10 max-h-[88dvh] w-full max-w-md overflow-y-auto rounded-t-[28px] bg-card p-6 pb-[max(1.5rem,env(safe-area-inset-bottom))] text-card-foreground sm:rounded-[28px] sm:pb-6 sm:shadow-lg",
           className,
         )}
       >
+        {/* 폰에서는 시트 손잡이 */}
+        <div
+          aria-hidden
+          className="mx-auto -mt-2 mb-4 h-1.5 w-10 rounded-full bg-border sm:hidden"
+        />
         {children}
       </div>
     </div>,

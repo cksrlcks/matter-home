@@ -1,21 +1,21 @@
 import type { DeviceKind } from "@/lib/device-kind";
 import { cn } from "@/lib/utils";
 
-// 기기 종류별 스티커 그림 (public/art/, 256px 투명 PNG).
+// 기기 종류별 3D 아이콘 (public/art/, 256px 투명 WebP).
 // 여기에 등록되지 않은 종류는 아래의 SVG 그림으로 대신한다.
 const ART_IMAGES: Partial<Record<DeviceKind, string>> = {
-  light: "/art/light.png",
-  plug: "/art/plug.png",
-  switch: "/art/switch.png",
-  camera: "/art/camera.png",
-  tv: "/art/tv.png",
-  other: "/art/other.png",
+  light: "/art/light.webp",
+  plug: "/art/plug.webp",
+  switch: "/art/switch.webp",
+  camera: "/art/camera.webp",
+  tv: "/art/tv.webp",
+  other: "/art/other.webp",
 };
 
 // 화면 장식용 장면 그림 (로그인, 빈 홈)
 const SCENE_IMAGES = {
-  house: "/art/house.png",
-  empty: "/art/empty.png",
+  house: "/art/house.webp",
+  empty: "/art/empty.webp",
 };
 
 export function SceneArt({
@@ -26,7 +26,7 @@ export function SceneArt({
   className?: string;
 }) {
   return (
-    // eslint-disable-next-line @next/next/no-img-element -- 작은 정적 스티커 PNG
+    // eslint-disable-next-line @next/next/no-img-element -- 작은 정적 아이콘
     <img
       src={SCENE_IMAGES[scene]}
       alt=""
@@ -50,7 +50,7 @@ export function DeviceArt({ kind, on, className }: Props) {
   const tone = cn("size-16 shrink-0 transition-[filter,opacity]", !on && "opacity-55 grayscale", className);
 
   if (image) {
-    // eslint-disable-next-line @next/next/no-img-element -- 작은 정적 스티커 PNG
+    // eslint-disable-next-line @next/next/no-img-element -- 작은 정적 아이콘
     return <img src={image} alt="" aria-hidden className={cn(tone, "object-contain")} />;
   }
 

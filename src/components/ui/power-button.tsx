@@ -13,7 +13,7 @@ type Props = {
   className?: string;
 };
 
-// 디바이스 타일 우상단 40px 원형 전원 버튼. on = 노랑 스티커, off = 카드색.
+// 디바이스 타일 우상단 40px 원형 전원 버튼. on = 라임 채움, off = 회색.
 export function PowerButton({ on, onClick, pending, disabled, className }: Props) {
   return (
     <button
@@ -24,10 +24,10 @@ export function PowerButton({ on, onClick, pending, disabled, className }: Props
       aria-label={on ? "끄기" : "켜기"}
       aria-busy={pending || undefined}
       className={cn(
-        "inline-flex size-10 shrink-0 items-center justify-center rounded-full border-2 transition-colors disabled:cursor-not-allowed disabled:opacity-45",
+        "inline-flex size-10 shrink-0 items-center justify-center rounded-full transition-colors disabled:cursor-not-allowed disabled:opacity-45",
         on
-          ? "border-ink bg-tile-light text-tile-ink shadow-sm"
-          : "border-ink bg-card text-muted-foreground hover:text-foreground",
+          ? "bg-primary text-primary-foreground"
+          : "bg-muted text-muted-foreground hover:text-foreground",
         className,
       )}
     >

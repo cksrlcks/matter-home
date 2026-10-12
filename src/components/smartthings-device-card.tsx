@@ -1,22 +1,12 @@
 import type { ReactNode } from "react";
-import { Camera, Cpu, Lightbulb, Plug } from "lucide-react";
-
 import { Badge } from "@/components/ui/badge";
+import { smartThingsKind } from "@/lib/device-kind";
 import { displayName, type SmartThingsDevice } from "@/lib/smartthings";
 
+import { DeviceArt } from "./device-art";
 import { SmartThingsDeviceName } from "./device-name";
 import { DeviceTile } from "./device-tile";
 import { SmartThingsSwitch } from "./smartthings-switch";
-
-// 기기 종류·이름으로 아이콘을 고른다. c2c-switch는 대부분 조명이라 전구를 기본으로 둔다.
-function deviceIcon(device: SmartThingsDevice, camera?: boolean) {
-  if (camera) return <Camera />;
-  const hint =
-    `${device.deviceTypeName ?? ""} ${device.label ?? ""} ${device.name}`.toLowerCase();
-  if (/plug|outlet|콘센트|플러그/.test(hint)) return <Plug />;
-  if (/light|bulb|lamp|switch|등|조명/.test(hint)) return <Lightbulb />;
-  return <Cpu />;
-}
 
 type Props = {
   device: SmartThingsDevice;
@@ -48,7 +38,13 @@ export function SmartThingsDeviceCard({
   return (
     <DeviceTile
       state={state}
-      icon={deviceIcon(device, camera)}
+      // 켜고 끌 수 없는 기기(카메라 등)는 색을 그대로 보여준다.
+      icon={
+        <DeviceArt
+          kind={smartThingsKind(device, !!camera)}
+          on={switchOn === undefined || switchOn === true}
+        />
+      }
       title={
         editableName ? (
           <SmartThingsDeviceName

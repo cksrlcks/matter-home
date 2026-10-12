@@ -135,7 +135,7 @@ export function DashboardControl({
           {busy ? (
             <Loader2 className="animate-spin" />
           ) : (
-            <Star className={cn(pinned && "fill-tile-light")} />
+            <Star className={cn(pinned && "fill-primary text-primary")} />
           )}
         </Button>
         {picker}
@@ -152,7 +152,7 @@ export function DashboardControl({
         disabled={disabled || busy}
         aria-pressed={pinned}
         className={cn(
-          pinned && "bg-accent-soft hover:bg-accent-soft",
+          pinned && "bg-accent-soft text-primary hover:bg-accent-soft",
         )}
       >
         {isPending || busy ? (

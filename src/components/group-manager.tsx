@@ -242,7 +242,7 @@ function GroupRow({ group, count, onMoveUp, onMoveDown }: GroupRowProps) {
 
   if (editing) {
     return (
-      <li className="flex items-center gap-1.5 px-4 py-2.5">
+      <li className="flex items-center gap-1.5 px-5 py-3">
         <Input
           autoFocus
           value={value}
@@ -270,7 +270,7 @@ function GroupRow({ group, count, onMoveUp, onMoveDown }: GroupRowProps) {
   }
 
   return (
-    <li className="flex items-center gap-2 px-4 py-3">
+    <li className="flex items-center gap-2 px-5 py-3.5">
       <span className="min-w-0 flex-1 truncate font-medium">{group.name}</span>
       <span className="shrink-0 text-xs text-muted-foreground">타일 {count}개</span>
       <Button

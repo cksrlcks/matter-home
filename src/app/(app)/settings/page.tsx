@@ -18,7 +18,7 @@ function Row({
   children: ReactNode;
 }) {
   return (
-    <li className="flex items-center justify-between gap-3 px-4 py-3.5">
+    <li className="flex items-center justify-between gap-3 px-5 py-4">
       <div className="min-w-0">
         <p className="font-semibold">{title}</p>
         <p className="mt-0.5 text-sm text-muted-foreground">{description}</p>

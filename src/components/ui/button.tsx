@@ -6,20 +6,18 @@ export type ButtonVariant = "default" | "outline" | "ghost" | "danger";
 export type ButtonSize = "default" | "sm" | "icon" | "icon-sm";
 
 const VARIANT: Record<ButtonVariant, string> = {
-  // ghost를 뺀 버튼은 스티커(잉크 외곽선 + 그림자)이고 누르면 눌린다.
-  default:
-    "sticker-press border-ink bg-primary text-primary-foreground shadow-sm hover:bg-primary-strong",
-  outline:
-    "sticker-press border-ink bg-card text-foreground shadow-sm hover:bg-muted",
-  ghost: "border-transparent text-muted-foreground hover:bg-muted hover:text-foreground",
-  danger: "sticker-press border-ink bg-danger text-white shadow-sm hover:bg-danger/90",
+  // 캡슐 버튼. default = 라임 채움(화면당 1개), outline = 회색 채움(보조).
+  default: "press bg-primary text-primary-foreground hover:bg-primary-strong",
+  outline: "press bg-muted text-foreground hover:bg-border",
+  ghost: "text-muted-foreground hover:bg-muted hover:text-foreground",
+  danger: "press bg-danger text-white hover:bg-danger/90",
 };
 
 const SIZE: Record<ButtonSize, string> = {
-  default: "h-10 rounded-xl px-4 text-sm",
-  sm: "h-8 rounded-lg px-3 text-xs",
-  icon: "size-10 rounded-xl",
-  "icon-sm": "size-8 rounded-lg",
+  default: "h-10 rounded-full px-4.5 text-sm",
+  sm: "h-8 rounded-full px-3.5 text-xs",
+  icon: "size-10 rounded-full",
+  "icon-sm": "size-8 rounded-full",
 };
 
 // <Link> 등 버튼이 아닌 요소에 같은 스타일을 입힐 때 사용
@@ -33,7 +31,7 @@ export function buttonClassName({
   className?: string;
 } = {}) {
   return cn(
-    "inline-flex shrink-0 items-center justify-center gap-2 border-2 font-semibold whitespace-nowrap transition-colors disabled:pointer-events-none disabled:opacity-45 [&_svg]:size-4 [&_svg]:shrink-0",
+    "inline-flex shrink-0 items-center justify-center gap-2 font-semibold whitespace-nowrap transition-colors disabled:pointer-events-none disabled:opacity-45 [&_svg]:size-4 [&_svg]:shrink-0",
     VARIANT[variant],
     SIZE[size],
     className,

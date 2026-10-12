@@ -22,7 +22,7 @@ export function BottomTabs() {
     <div className="pointer-events-none fixed inset-x-0 bottom-0 z-40 flex justify-center pb-[max(0.75rem,env(safe-area-inset-bottom))]">
       <nav
         aria-label="주 메뉴"
-        className="pointer-events-auto flex gap-1 rounded-full border-2 border-ink bg-primary p-1.5 shadow-md"
+        className="pointer-events-auto flex gap-1 rounded-full bg-muted/85 p-1.5 shadow-lg backdrop-blur-xl"
       >
         {TABS.map(({ href, label, icon: Icon }) => {
           const active = isActive(href);
@@ -34,8 +34,8 @@ export function BottomTabs() {
               className={cn(
                 "flex h-11 min-w-20 items-center justify-center gap-1.5 rounded-full px-4 text-sm font-bold transition-colors",
                 active
-                  ? "bg-tile-light text-tile-ink"
-                  : "text-primary-foreground/70 hover:text-primary-foreground",
+                  ? "bg-white/10 text-primary"
+                  : "text-muted-foreground hover:text-foreground",
               )}
             >
               <Icon className="size-5" strokeWidth={2.4} />

@@ -22,7 +22,7 @@ export function Providers({ children }: { children: ReactNode }) {
   return (
     <QueryClientProvider client={queryClient}>
       <ConfirmProvider>{children}</ConfirmProvider>
-      <Toaster richColors position="top-center" />
+      <Toaster richColors theme="dark" position="top-center" />
     </QueryClientProvider>
   );
 }

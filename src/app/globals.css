@@ -1,68 +1,44 @@
 @import "tailwindcss";
 
 /*
-  디자인 토큰 — "스티커 타일" 테마 (DESIGN.md)
-  크림 배경 위에 잉크 외곽선 + 딱 떨어지는 그림자가 붙은 원색 타일.
+  디자인 토큰 — Apple Fitness 풍 (DESIGN.md)
+  검은 배경 위에 테두리 없는 위젯 카드, 종류별 형광 포인트 색. 항상 다크.
   shadcn식 유틸 이름(bg-card, text-muted-foreground …)은 유지하고 값만 바꿨다.
 
-  bg-background  페이지(크림)         bg-card      카드·인풋·다이얼로그
-  bg-muted       패널·꺼진 타일        border-border 얇은 구분선
-  border-ink     스티커 외곽선·그림자   bg-primary   주요 버튼(잉크)
-  bg-accent-soft 선택·켜짐 강조(노랑)   bg-tile-*    기기 종류별 타일 색(켜짐)
+  bg-background  페이지(검정)          bg-card       위젯 카드·시트
+  bg-muted       카드 위 한 단계(버튼·인풋·칩)  border-border 얇은 구분선
+  bg-primary     주요 버튼·선택(라임)    bg-secondary  토글 on(초록)
+  bg-accent-soft 선택·켜짐 바탕(라임 틴트) bg-tile-*     기기 종류별 포인트 색
 */
 :root {
-  --background: #fff4dc;
-  --foreground: #1b1b1b;
-  --card: #fffdf6;
-  --card-foreground: #1b1b1b;
-  --muted: #f4e7c6;
-  --muted-foreground: #6b6250;
-  --border: #e3d3a8;
-  --ink: #1b1b1b;
-  --primary: #1b1b1b;
-  --primary-strong: #000000;
-  --primary-foreground: #fff4dc;
-  --secondary: #1b1b1b;
-  --secondary-foreground: #ffd23f;
-  --accent-soft: #ffe58a;
-  --success: #15803d;
-  --warning: #c2570a;
-  --danger: #dc2626;
-  --info: #2563eb;
-  --ring: #2563eb;
+  color-scheme: dark;
 
-  /* 타일 색은 라이트/다크 공통. 타일 위 글자는 항상 잉크(--tile-ink). */
-  --tile-ink: #1b1b1b;
-  --tile-light: #ffd23f;
-  --tile-plug: #ff8fb1;
-  --tile-switch: #8ec5ff;
-  --tile-camera: #b7e36b;
-  --tile-tv: #c5a8ff;
-  --tile-other: #ffb067;
-}
+  --background: #000000;
+  --foreground: #ffffff;
+  --card: #1c1c1e;
+  --card-foreground: #ffffff;
+  --muted: #2c2c2e;
+  --muted-foreground: #98989f;
+  --border: #38383a;
+  --primary: #c6ff3d;
+  --primary-strong: #d6ff70;
+  --primary-foreground: #0a0a0a;
+  --secondary: #30d158;
+  --secondary-foreground: #ffffff;
+  --accent-soft: #263312;
+  --success: #30d158;
+  --warning: #ff9f0a;
+  --danger: #ff453a;
+  --info: #0a84ff;
+  --ring: #0a84ff;
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #1f1b14;
-    --foreground: #fff4dc;
-    --card: #2b261d;
-    --card-foreground: #fff4dc;
-    --muted: #383123;
-    --muted-foreground: #bdb198;
-    --border: #4d4433;
-    --ink: #000000;
-    --primary: #fff4dc;
-    --primary-strong: #ffffff;
-    --primary-foreground: #1b1b1b;
-    --secondary: #ffd23f;
-    --secondary-foreground: #1b1b1b;
-    --accent-soft: #4e4213;
-    --success: #4ade80;
-    --warning: #fdba74;
-    --danger: #f87171;
-    --info: #60a5fa;
-    --ring: #60a5fa;
-  }
+  /* 기기 종류별 포인트 색. 켜진 타일은 이 색의 틴트 바탕 + 이 색 글자. */
+  --tile-light: #ffd60a;
+  --tile-plug: #64d2ff;
+  --tile-switch: #30d158;
+  --tile-camera: #ff375f;
+  --tile-tv: #bf5af2;
+  --tile-other: #ff9f0a;
 }
 
 @theme inline {
@@ -73,7 +49,6 @@
   --color-muted: var(--muted);
   --color-muted-foreground: var(--muted-foreground);
   --color-border: var(--border);
-  --color-ink: var(--ink);
   --color-primary: var(--primary);
   --color-primary-strong: var(--primary-strong);
   --color-primary-foreground: var(--primary-foreground);
@@ -85,7 +60,6 @@
   --color-warning: var(--warning);
   --color-danger: var(--danger);
   --color-info: var(--info);
-  --color-tile-ink: var(--tile-ink);
   --color-tile-light: var(--tile-light);
   --color-tile-plug: var(--tile-plug);
   --color-tile-switch: var(--tile-switch);
@@ -94,23 +68,22 @@
   --color-tile-other: var(--tile-other);
 }
 
-/* 서체·그림자 스케일. --font-pretendard / --font-jua 는 next/font가 <html>에 주입한다.
-   그림자는 흐림 없이 잉크색으로 딱 떨어진다(스티커). */
+/* 서체·그림자 스케일. --font-pretendard 는 next/font/local이 <html>에 주입한다.
+   카드는 그림자 없이 배경 단계(검정 → 카드 → muted)로만 구분하고, 그림자는 떠 있는 것(시트·끄는 타일)에만 쓴다. */
 @theme {
   --font-sans:
     var(--font-pretendard), "Pretendard Variable", "Pretendard", -apple-system,
     BlinkMacSystemFont, system-ui, "Apple SD Gothic Neo", "Noto Sans KR",
     sans-serif;
-  --font-display: var(--font-jua), var(--font-sans);
   --text-2xl: 26px;
   --text-2xl--line-height: 1.15;
-  --text-3xl: 32px;
-  --text-3xl--line-height: 1.15;
+  --text-3xl: 34px;
+  --text-3xl--line-height: 1.1;
   --text-4xl: 44px;
   --text-4xl--line-height: 1;
-  --shadow-sm: 2px 2px 0 var(--ink);
-  --shadow-md: 3px 3px 0 var(--ink);
-  --shadow-lg: 5px 5px 0 var(--ink);
+  --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.4);
+  --shadow-md: 0 6px 18px rgb(0 0 0 / 0.45);
+  --shadow-lg: 0 16px 40px rgb(0 0 0 / 0.6);
 }
 
 body {
@@ -119,12 +92,11 @@ body {
   font-family: var(--font-sans);
 }
 
-/* 제목은 둥근 디스플레이 서체. 단일 굵기라 가짜 볼드 합성은 끈다. */
 h1,
 h2,
 h3 {
-  font-family: var(--font-display);
-  font-synthesis-weight: none;
+  font-weight: 700;
+  letter-spacing: -0.02em;
 }
 
 /* 키보드 포커스 링 */
@@ -133,20 +105,11 @@ h3 {
   outline-offset: 2px;
 }
 
-/* 스티커: 잉크 외곽선 + 딱 떨어지는 그림자 */
-@utility sticker {
-  border: 2px solid var(--ink);
-  box-shadow: 3px 3px 0 var(--ink);
-}
-
-/* 누르면 그림자 쪽으로 눌린다 */
-@utility sticker-press {
-  transition:
-    transform 80ms ease-out,
-    box-shadow 80ms ease-out;
+/* 누르면 살짝 줄어든다 */
+@utility press {
+  transition: transform 120ms ease-out;
   &:active:not(:disabled) {
-    transform: translate(3px, 3px);
-    box-shadow: 0 0 0 var(--ink);
+    transform: scale(0.97);
   }
 }
 

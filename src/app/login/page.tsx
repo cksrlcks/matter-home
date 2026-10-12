@@ -10,7 +10,7 @@ export const metadata = {
 export default function LoginPage() {
   return (
     <main className="flex min-h-dvh items-center justify-center p-4">
-      <div className="sticker w-full max-w-sm rounded-3xl bg-card p-6">
+      <div className="w-full max-w-sm rounded-[28px] bg-card p-6">
         <div className="mb-6 flex flex-col items-center text-center">
           <SceneArt scene="house" className="mb-2 size-28" />
           <h1 className="text-2xl">우리집</h1>

@@ -4,7 +4,7 @@ import { HomeBoard } from "@/components/home-board";
 import { PageHeader } from "@/components/page-header";
 import { getDashboard } from "@/lib/db/dashboard";
 import { withCustomNames } from "@/lib/db/smartthings-device-names";
-import { kindFromHint } from "@/lib/device-kind";
+import { smartThingsKind } from "@/lib/device-kind";
 import {
   displayName,
   getDevice,
@@ -28,13 +28,7 @@ async function loadSmartThings(deviceId: string): Promise<SmartThingsTileDto> {
       name: displayName(device),
       defaultName,
       customName: device.customName ?? null,
-      // c2c-switch는 대부분 조명이라 못 맞추면 전구로 둔다.
-      kind: camera
-        ? "camera"
-        : kindFromHint(
-            `${device.deviceTypeName ?? ""} ${defaultName} ${device.name}`,
-            "light",
-          ),
+      kind: smartThingsKind(device, camera),
       camera,
       switchOn,
     };

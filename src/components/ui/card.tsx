@@ -2,7 +2,7 @@ import * as React from "react";
 
 import { cn } from "@/lib/utils";
 
-// 스티커 카드: 잉크 외곽선 + 딱 떨어지는 그림자.
+// 위젯 카드: 테두리·그림자 없이 검은 배경과의 톤 차이로만 구분한다.
 export function Card({
   className,
   ...props
@@ -10,7 +10,7 @@ export function Card({
   return (
     <div
       className={cn(
-        "sticker rounded-3xl bg-card text-card-foreground",
+        "rounded-[22px] bg-card text-card-foreground",
         className,
       )}
       {...props}

@@ -48,7 +48,7 @@ export default async function SmartThingsDevicesPage({
       ) : devices.length === 0 ? (
         <p className="text-sm text-muted-foreground">등록된 기기가 없습니다.</p>
       ) : (
-        <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3">
+        <div className="grid gap-3 sm:grid-cols-2">
           {devices.map((d) => (
             <SmartThingsDeviceCard
               key={d.deviceId}

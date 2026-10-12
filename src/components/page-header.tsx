@@ -12,7 +12,7 @@ export function PageHeader({ title, description, actions }: Props) {
   return (
     <header className="mb-5 flex items-end justify-between gap-3">
       <div className="min-w-0">
-        <h1 className="text-3xl tracking-[-.01em]">{title}</h1>
+        <h1 className="text-3xl">{title}</h1>
         {description && (
           <p className="mt-1 text-sm text-muted-foreground">{description}</p>
         )}

@@ -15,7 +15,7 @@ type Props = {
   className?: string;
 };
 
-// 토글 스위치. on = secondary(라이트: 잉크, 다크: 노랑). 오프라인 기기는 숨기지 말고 disabled로 남긴다.
+// 토글 스위치. on = secondary(초록). 오프라인 기기는 숨기지 말고 disabled로 남긴다.
 export function Switch({
   checked,
   onCheckedChange,

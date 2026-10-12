@@ -20,7 +20,7 @@ export function TileSkeleton({ className }: { className?: string }) {
   return (
     <Card
       aria-busy="true"
-      className={cn("flex min-h-40 flex-col gap-3 p-4", className)}
+      className={cn("flex min-h-40 flex-col gap-4 p-5", className)}
     >
       <div className="flex justify-between">
         <Skeleton className="size-10" />
@@ -44,7 +44,7 @@ export function TileGridSkeleton({
   className,
 }: TileGridSkeletonProps) {
   return (
-    <div className={cn("grid gap-3 sm:grid-cols-2 md:grid-cols-3", className)}>
+    <div className={cn("grid gap-3 sm:grid-cols-2", className)}>
       {Array.from({ length: count }, (_, i) => (
         <TileSkeleton key={i} />
       ))}

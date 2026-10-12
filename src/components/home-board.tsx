@@ -35,7 +35,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useDashboard, useSaveLayout } from "@/hooks/use-dashboard";
 import { useDevices, usePowerMutation } from "@/hooks/use-devices";
 import { removeTile, tileKey } from "@/lib/dashboard-layout";
-import { kindFromHint, type DeviceKind } from "@/lib/device-kind";
+import { matterKind, type DeviceKind } from "@/lib/device-kind";
 import { formatWatts } from "@/lib/energy";
 import { cn } from "@/lib/utils";
 import type { DashboardDto, DashboardItemDto } from "@/types/dashboard";
@@ -47,10 +47,11 @@ import { DeviceName, SmartThingsDeviceName, SwitchName } from "./device-name";
 import { EnergySummary } from "./energy-summary";
 import { PageHeader } from "./page-header";
 import {
-  StickerTile,
+  HomeTile,
+  tileAccentClass,
   tileSurfaceClass,
-  type StickerTileState,
-} from "./sticker-tile";
+  type HomeTileState,
+} from "./home-tile";
 import { TileSheet } from "./tile-sheet";
 
 type Props = {
@@ -65,7 +66,7 @@ type Tile = {
   title: string;
   /** 편집 모드·시트에서 보여줄 보조 설명 (소속 기기 등) */
   caption: string;
-  state: StickerTileState;
+  state: HomeTileState;
   /** 켜져 있는 스위치 수 (상단 요약용) */
   onCount: number;
 } & (
@@ -89,16 +90,6 @@ const collisionDetection: CollisionDetection = (args) => {
   if (tiles.length > 0) return tiles;
   return hits.length > 0 ? hits : closestCenter(args);
 };
-
-function matterKind(device: DeviceDto, sw?: DeviceSwitchDto): DeviceKind {
-  if (!sw) {
-    if (device.energy) return "plug";
-    const types = device.endpoints.map((e) => e.deviceType ?? "").join(" ");
-    return kindFromHint(`${device.name} ${types}`);
-  }
-  const type = device.endpoints.find((e) => e.id === sw.endpointId)?.deviceType ?? "";
-  return kindFromHint(`${sw.name} ${type}`, "switch");
-}
 
 export function HomeBoard({ initialDashboard, smartThings }: Props) {
   const router = useRouter();
@@ -334,7 +325,7 @@ export function HomeBoard({ initialDashboard, smartThings }: Props) {
     const openSheet = () => setSheetKey(key);
 
     if (tile.type === "loading") {
-      return <Skeleton key={key} className="min-h-36 rounded-3xl" />;
+      return <Skeleton key={key} className="min-h-40 rounded-[22px]" />;
     }
     if (tile.type === "bundle") {
       return (
@@ -348,7 +339,7 @@ export function HomeBoard({ initialDashboard, smartThings }: Props) {
       );
     }
     return (
-      <StickerTile
+      <HomeTile
         key={key}
         kind={tile.kind}
         state={tile.state}
@@ -392,7 +383,7 @@ export function HomeBoard({ initialDashboard, smartThings }: Props) {
       {!editing && <EnergySummary />}
 
       {items.length === 0 && !editing ? (
-        <div className="sticker flex flex-col items-center gap-3 rounded-3xl bg-card px-6 py-10 text-center">
+        <div className="flex flex-col items-center gap-3 rounded-[22px] bg-card px-6 py-10 text-center">
           <SceneArt scene="empty" className="size-28" />
           <h2 className="text-xl">아직 홈이 비어 있어요</h2>
           <p className="text-sm text-muted-foreground">
@@ -481,9 +472,9 @@ export function HomeBoard({ initialDashboard, smartThings }: Props) {
 
 function SectionTitle({ title, count }: { title: string; count: number }) {
   return (
-    <h2 className="flex items-baseline gap-2 text-xl">
+    <h2 className="flex items-baseline gap-2 text-[22px]">
       {title}
-      <span className="font-sans text-sm font-semibold text-muted-foreground">{count}</span>
+      <span className="text-sm font-semibold text-muted-foreground">{count}</span>
     </h2>
   );
 }
@@ -556,12 +547,17 @@ function BundleTile({
   onMore: () => void;
 }) {
   return (
-    <div className={cn("col-span-2 p-3.5", tileSurfaceClass(tile.kind, tile.state))}>
+    <div className={cn("col-span-2 p-5", tileSurfaceClass(tile.kind, tile.state))}>
       <div className="flex items-center gap-3">
         <DeviceArt kind={tile.kind} on={tile.state === "on"} className="size-12" />
         <div className="min-w-0 flex-1">
-          <p className="truncate font-display text-lg leading-tight">{tile.title}</p>
-          <p className="mt-0.5 truncate text-xs font-semibold opacity-70">
+          <p className="truncate text-[15px] leading-tight font-bold">{tile.title}</p>
+          <p
+            className={cn(
+              "mt-1 truncate text-sm font-semibold tabular-nums",
+              tileAccentClass(tile.kind, tile.state),
+            )}
+          >
             {device.online
               ? `${tile.onCount}/${device.switches.length} 켜짐`
               : "오프라인"}
@@ -571,12 +567,12 @@ function BundleTile({
           type="button"
           onClick={onMore}
           aria-label={`${tile.title} 설정`}
-          className="grid size-9 shrink-0 place-items-center rounded-full opacity-60 transition-[opacity,background-color] hover:bg-black/10 hover:opacity-100"
+          className="grid size-9 shrink-0 place-items-center rounded-full text-muted-foreground transition-colors hover:bg-white/10 hover:text-foreground"
         >
           <Ellipsis className="size-5" strokeWidth={2.6} />
         </button>
       </div>
-      <div className="mt-3 grid grid-cols-[repeat(auto-fit,minmax(5.5rem,1fr))] gap-2">
+      <div className="mt-4 grid grid-cols-[repeat(auto-fit,minmax(5.5rem,1fr))] gap-2">
         {device.switches.map((sw) => (
           <button
             key={sw.endpointId}
@@ -585,10 +581,10 @@ function BundleTile({
             disabled={!device.online || sw.pending}
             onClick={() => onToggle(sw)}
             className={cn(
-              "sticker-press h-12 min-w-0 truncate rounded-2xl border-2 border-ink px-3 text-sm font-bold disabled:opacity-50",
+              "press h-11 min-w-0 truncate rounded-full px-3 text-sm font-semibold disabled:opacity-50",
               sw.on && device.online
-                ? "bg-white text-tile-ink shadow-sm"
-                : "bg-black/10",
+                ? "bg-white text-black"
+                : "bg-white/10 text-white/70",
             )}
           >
             {sw.name}
@@ -623,7 +619,7 @@ function EditSection({
             keys.length > 0
               ? "grid grid-cols-2 gap-3 sm:grid-cols-3"
               : "grid place-items-center border-2 border-dashed border-border text-sm text-muted-foreground",
-            keys.length === 0 && isOver && "border-ink bg-muted",
+            keys.length === 0 && isOver && "border-primary bg-accent-soft text-primary",
           )}
         >
           {keys.length > 0 ? children : "여기로 끌어다 놓기"}
@@ -656,19 +652,21 @@ function EditTile({
         {...attributes}
         {...listeners}
         className={cn(
-          "flex min-h-24 cursor-grab touch-manipulation flex-col justify-end p-3.5 select-none [-webkit-touch-callout:none]",
+          "flex min-h-24 cursor-grab touch-manipulation flex-col justify-end p-5 select-none [-webkit-touch-callout:none]",
           tileSurfaceClass(tile.kind, tile.state),
           isDragging ? "scale-105 cursor-grabbing shadow-lg" : "animate-wiggle",
         )}
       >
-        <p className="truncate font-display text-lg leading-tight">{tile.title}</p>
-        <p className="mt-0.5 truncate text-xs font-semibold opacity-70">{tile.caption}</p>
+        <p className="truncate text-[15px] leading-tight font-bold">{tile.title}</p>
+        <p className="mt-1 truncate text-xs font-semibold text-muted-foreground">
+          {tile.caption}
+        </p>
       </div>
       <button
         type="button"
         onClick={onRemove}
         aria-label={`${tile.title} 홈에서 숨기기`}
-        className="absolute -top-2 -left-2 grid size-8 place-items-center rounded-full border-2 border-ink bg-card text-foreground shadow-sm"
+        className="absolute -top-2 -left-2 grid size-7 place-items-center rounded-full bg-muted-foreground text-background shadow-md"
       >
         <Minus className="size-4" strokeWidth={3} />
       </button>

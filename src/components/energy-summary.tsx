@@ -33,6 +33,43 @@ function formatSince(iso: string): string {
   }).format(new Date(iso));
 }
 
+// 오늘 사용량 링. 평소(기록이 있는 지난 날들의 평균) 대비 얼마나 썼는지를 채운다.
+function Ring({ progress }: { progress: number }) {
+  const radius = 18;
+  const circumference = 2 * Math.PI * radius;
+  const filled = circumference * Math.min(Math.max(progress, 0), 1);
+  return (
+    <svg
+      viewBox="0 0 48 48"
+      aria-hidden
+      className="size-12 shrink-0 -rotate-90 text-tile-light"
+    >
+      <circle
+        cx="24"
+        cy="24"
+        r={radius}
+        fill="none"
+        stroke="currentColor"
+        strokeOpacity=".22"
+        strokeWidth="7"
+      />
+      {/* 0이면 둥근 끝(linecap)만 점으로 남으므로 그리지 않는다. */}
+      <circle
+        cx="24"
+        cy="24"
+        r={radius}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="7"
+        strokeLinecap="round"
+        visibility={filled > 0 ? "visible" : "hidden"}
+        strokeDasharray={`${filled} ${circumference}`}
+        className="transition-[stroke-dasharray] duration-700"
+      />
+    </svg>
+  );
+}
+
 // 전력 측정을 지원하는 모든 플러그의 합산 + 기간별 사용량 + 플러그별 비중.
 // 실시간 W는 useDevices(3초), 기간 사용량은 useEnergyUsage(1분)에서 온다.
 export function EnergySummary({ className }: Props) {
@@ -62,6 +99,14 @@ export function EnergySummary({ className }: Props) {
   const today = usage ? splitUnit(formatKwh(usage.todayKwh)) : NONE;
   const month = usage ? splitUnit(formatKwh(usage.monthKwh)) : NONE;
 
+  // 평소 하루 사용량: 오늘(마지막 칸)을 뺀, 기록이 있는 날들의 평균.
+  const pastDays = (usage?.daily.slice(0, -1) ?? []).filter((d) => d.kwh > 0);
+  const usualKwh =
+    pastDays.length > 0
+      ? pastDays.reduce((sum, d) => sum + d.kwh, 0) / pastDays.length
+      : null;
+  const todayRatio = usage && usualKwh ? usage.todayKwh / usualKwh : null;
+
   return (
     <Card className={cn("mb-6", className)}>
       <h2>
@@ -70,17 +115,26 @@ export function EnergySummary({ className }: Props) {
           onClick={() => setOpen((prev) => !prev)}
           aria-expanded={open}
           aria-controls="energy-summary-panel"
-          className="flex w-full items-center justify-between gap-3 rounded-2xl p-5 text-left"
+          className="flex w-full items-center gap-4 rounded-[22px] p-5 text-left"
         >
-          <span className="text-lg font-semibold">전력 사용량</span>
-          <span className="flex min-w-0 items-center gap-3">
-            <span className="truncate text-sm tabular-nums">
-              <span className="font-semibold">{formatWatts(totalW)}</span>
-              {usage && (
-                <span className="ml-2 text-muted-foreground">
-                  오늘 {formatKwh(usage.todayKwh)}
-                </span>
-              )}
+          <Ring progress={todayRatio ?? 0} />
+          <span className="min-w-0 flex-1">
+            <span className="block text-[15px] leading-tight font-bold">
+              오늘 전력
+            </span>
+            <span className="mt-0.5 flex items-baseline gap-1 text-tile-light tabular-nums">
+              <span className="text-2xl font-bold">{today[0]}</span>
+              <span className="text-sm font-semibold">{today[1]}</span>
+            </span>
+          </span>
+          <span className="flex shrink-0 items-center gap-2">
+            <span className="text-right text-xs text-muted-foreground tabular-nums">
+              <span className="block text-sm font-semibold text-foreground">
+                {formatWatts(totalW)}
+              </span>
+              {todayRatio !== null
+                ? `평소의 ${Math.round(todayRatio * 100)}%`
+                : "지금 사용 중"}
             </span>
             <ChevronDown
               className={cn(

@@ -37,8 +37,8 @@ type Props = {
 
 const chip = (selected: boolean) =>
   cn(
-    "inline-flex h-10 items-center rounded-full border-2 border-ink px-4 text-sm font-bold transition-colors",
-    selected ? "bg-tile-light text-tile-ink shadow-sm" : "bg-card hover:bg-muted",
+    "inline-flex h-10 items-center rounded-full px-4 text-sm font-semibold transition-colors",
+    selected ? "bg-primary text-primary-foreground" : "bg-muted hover:bg-border",
   );
 
 function Section({ label, children }: { label: string; children: ReactNode }) {

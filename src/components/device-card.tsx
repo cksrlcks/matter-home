@@ -1,23 +1,15 @@
-import { Cpu, Lightbulb, Plug } from "lucide-react";
-
 import { Badge } from "@/components/ui/badge";
+import { matterKind } from "@/lib/device-kind";
 import { formatWatts, splitUnit } from "@/lib/energy";
 import type { DeviceDto } from "@/types/matter";
 
 import { DashboardControl } from "./dashboard-control";
+import { DeviceArt } from "./device-art";
 import { DeviceName, SwitchName } from "./device-name";
 import { DeviceTile, TileValue } from "./device-tile";
 import { EnergyStats } from "./energy-stats";
 import { PowerSwitch } from "./power-switch";
 import { RemoveDeviceButton } from "./remove-device-button";
-
-// Descriptor device type 이름으로 아이콘을 고른다. (lib/matter/device-types.ts)
-function deviceIcon(device: DeviceDto) {
-  const types = device.endpoints.map((e) => e.deviceType ?? "");
-  if (types.some((t) => t.includes("Light"))) return <Lightbulb />;
-  if (device.energy || types.some((t) => t.includes("Plug"))) return <Plug />;
-  return <Cpu />;
-}
 
 type Props = {
   device: DeviceDto;
@@ -51,7 +43,7 @@ export function DeviceCard({ device, manage, className }: Props) {
   return (
     <DeviceTile
       state={state}
-      icon={deviceIcon(device)}
+      icon={<DeviceArt kind={matterKind(device)} on={state === "on"} />}
       title={
         manage ? (
           <DeviceName

@@ -56,7 +56,7 @@ export function GroupPickerDialog({
                 onClick={() => onSelect(option.id)}
                 className={cn(
                   "flex w-full items-center justify-between gap-3 rounded-xl px-4 py-3 text-left text-sm font-medium transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-45",
-                  selected && "bg-accent-soft hover:bg-accent-soft",
+                  selected && "bg-accent-soft text-primary hover:bg-accent-soft",
                 )}
               >
                 <span className="truncate">{option.name}</span>

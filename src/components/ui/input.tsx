@@ -6,13 +6,13 @@ type InputProps = React.InputHTMLAttributes<HTMLInputElement> & {
   ref?: React.Ref<HTMLInputElement>;
 };
 
-// 높이 42, 라운드 12. 포커스 = 잉크 테두리 + 12% 링, 오류는 aria-invalid로 표시.
+// 높이 42, 라운드 12, 회색 채움. 포커스 = 라임 테두리 + 12% 링, 오류는 aria-invalid로 표시.
 export function Input({ className, ref, ...props }: InputProps) {
   return (
     <input
       ref={ref}
       className={cn(
-        "flex h-10.5 w-full rounded-xl border-2 border-ink bg-card px-3.5 text-base text-foreground transition-[border-color,box-shadow] outline-none placeholder:text-muted-foreground/70 focus-visible:border-primary focus-visible:ring-[3px] focus-visible:ring-primary/12 focus-visible:outline-none aria-invalid:border-danger aria-invalid:focus-visible:ring-danger/15 disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground",
+        "flex h-10.5 w-full rounded-xl border border-transparent bg-muted px-3.5 text-base text-foreground transition-[border-color,box-shadow] outline-none placeholder:text-muted-foreground/70 focus-visible:border-primary focus-visible:ring-[3px] focus-visible:ring-primary/12 focus-visible:outline-none aria-invalid:border-danger aria-invalid:focus-visible:ring-danger/15 disabled:cursor-not-allowed disabled:text-muted-foreground disabled:opacity-60",
         className,
       )}
       {...props}

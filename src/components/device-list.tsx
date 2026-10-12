@@ -47,7 +47,7 @@ export function DeviceList() {
   }
 
   return (
-    <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3">
+    <div className="grid gap-3 sm:grid-cols-2">
       {data.map((device) => (
         <DeviceCard key={device.nodeId} device={device} manage />
       ))}

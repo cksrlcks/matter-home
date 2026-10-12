@@ -10,7 +10,7 @@ export type DeviceTileState = "on" | "off" | "offline";
 
 type Props = {
   state: DeviceTileState;
-  /** 좌상단 아이콘 박스에 들어갈 lucide 아이콘 */
+  /** 좌상단 기기 그림 (DeviceArt) */
   icon: ReactNode;
   title: ReactNode;
   subtitle?: ReactNode;
@@ -29,7 +29,7 @@ type Props = {
   className?: string;
 };
 
-// 기기 탭의 디바이스 카드. 색이 곧 상태 — 켜짐은 노랑 바탕, 오프라인은 점선. (홈 타일은 StickerTile)
+// 기기 탭의 디바이스 카드. 색이 곧 상태 — 켜짐은 라임 틴트 바탕, 오프라인은 흐리게. (홈 타일은 HomeTile)
 // data-state를 노출해 자식(EnergyStats 등)이 group-data-[state=on]으로 톤을 맞출 수 있다.
 export function DeviceTile({
   state,
@@ -48,22 +48,14 @@ export function DeviceTile({
     <Card
       data-state={state}
       className={cn(
-        "group flex min-h-40 flex-col gap-3 p-4",
+        "group flex min-h-40 flex-col gap-4 p-5",
         state === "on" && "bg-accent-soft",
-        state === "offline" && "border-dashed shadow-none",
+        state === "offline" && "bg-card/60",
         className,
       )}
     >
       <div className="flex items-start justify-between gap-2">
-        <span
-          className={cn(
-            "inline-flex size-10 shrink-0 items-center justify-center rounded-xl border-2 border-ink bg-muted text-foreground [&_svg]:size-5",
-            state === "on" && "bg-tile-light text-tile-ink",
-            state === "offline" && "text-muted-foreground",
-          )}
-        >
-          {icon}
-        </span>
+        {icon}
         {actions && (
           <div className="flex shrink-0 items-center gap-1">{actions}</div>
         )}

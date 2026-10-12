@@ -547,8 +547,14 @@ function BundleTile({
   onMore: () => void;
 }) {
   return (
-    <div className={cn("col-span-2 p-5", tileSurfaceClass(tile.kind, tile.state))}>
-      <div className="flex items-center gap-3">
+    <div
+      className={cn(
+        "relative col-span-2 p-5",
+        tileSurfaceClass(tile.kind, tile.state),
+      )}
+    >
+      {/* ⋯ 는 다른 타일과 같은 자리(우상단 모서리)에 둔다. */}
+      <div className="flex items-center gap-3 pr-8">
         <DeviceArt kind={tile.kind} on={tile.state === "on"} className="size-12" />
         <div className="min-w-0 flex-1">
           <p className="truncate text-[15px] leading-tight font-bold">{tile.title}</p>
@@ -563,15 +569,15 @@ function BundleTile({
               : "오프라인"}
           </p>
         </div>
-        <button
-          type="button"
-          onClick={onMore}
-          aria-label={`${tile.title} 설정`}
-          className="grid size-9 shrink-0 place-items-center rounded-full text-muted-foreground transition-colors hover:bg-white/10 hover:text-foreground"
-        >
-          <Ellipsis className="size-5" strokeWidth={2.6} />
-        </button>
       </div>
+      <button
+        type="button"
+        onClick={onMore}
+        aria-label={`${tile.title} 설정`}
+        className="absolute top-3 right-3 grid size-9 place-items-center rounded-full text-muted-foreground transition-colors hover:bg-white/10 hover:text-foreground"
+      >
+        <Ellipsis className="size-5" strokeWidth={2.6} />
+      </button>
       <div className="mt-4 grid grid-cols-[repeat(auto-fit,minmax(5.5rem,1fr))] gap-2">
         {device.switches.map((sw) => (
           <button

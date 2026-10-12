@@ -45,7 +45,7 @@ summary: 개인 홈 컨트롤(Matter/SmartThings) 앱. Apple Fitness 풍 — 검
 | 스위치 | `tile-switch` | `#30D158` |
 | 카메라 | `tile-camera` | `#FF375F` |
 | TV | `tile-tv` | `#BF5AF2` |
-| 기타 | `tile-other` | `#FF9F0A` |
+| 기타 | `tile-other` | `#AEAEB2` (특정 종류가 아니라 무채색) |
 
 - 종류는 `kindFromHint`가 이름·기기 유형에서 짐작한다.
 - 라운드: 위젯·타일 `22px`, 시트 `28px`, 인풋 `rounded-xl`, 버튼·칩·탭 `rounded-full`.

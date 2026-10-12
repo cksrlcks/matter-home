@@ -56,5 +56,6 @@ export async function proxy(request: NextRequest) {
 
 export const config = {
   // 정적 자원은 제외하고 나머지 모든 경로에 적용한다.
-  matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
+  // public/art(기기·장면 그림)는 로그인 화면에서도 보여야 하므로 함께 제외한다.
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|art/).*)"],
 };

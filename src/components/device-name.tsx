@@ -111,36 +111,36 @@ function EditableName({
           onClick={submit}
           disabled={pending}
           aria-label="저장"
-          className="shrink-0 rounded-md p-1.5 text-primary hover:bg-muted disabled:opacity-50"
+          className="grid size-9 shrink-0 place-items-center rounded-full text-primary hover:bg-muted disabled:opacity-50"
         >
-          <Check className="h-4 w-4" />
+          <Check className="size-4.5" />
         </button>
         <button
           type="button"
           onClick={() => setEditing(false)}
           aria-label="취소"
-          className="shrink-0 rounded-md p-1.5 text-muted-foreground hover:bg-muted"
+          className="grid size-9 shrink-0 place-items-center rounded-full text-muted-foreground hover:bg-muted"
         >
-          <X className="h-4 w-4" />
+          <X className="size-4.5" />
         </button>
       </div>
     );
   }
 
   return (
-    <div className="flex min-w-0 items-center gap-1.5">
+    <div className="flex min-w-0 items-center gap-0.5">
       {size === "title" ? (
-        <h2 className="truncate text-lg font-semibold">{name}</h2>
+        <h2 className="mr-1 truncate text-lg font-semibold">{name}</h2>
       ) : (
-        <span className="truncate text-sm font-medium">{name}</span>
+        <span className="mr-1 truncate text-sm font-medium">{name}</span>
       )}
       <button
         type="button"
         onClick={startEditing}
         aria-label="이름 변경"
-        className="shrink-0 rounded-md p-1 text-muted-foreground opacity-70 hover:bg-muted hover:opacity-100"
+        className="grid size-9 shrink-0 place-items-center rounded-full text-muted-foreground hover:bg-muted hover:text-foreground"
       >
-        <Pencil className="h-3.5 w-3.5" />
+        <Pencil className="size-4" />
       </button>
       {customName && customName !== defaultName && (
         <button
@@ -149,9 +149,9 @@ function EditableName({
           disabled={pending}
           aria-label="기본 이름으로 초기화"
           title={`기본 이름: ${defaultName}`}
-          className="shrink-0 rounded-md p-1 text-muted-foreground opacity-70 hover:bg-muted hover:opacity-100 disabled:opacity-50"
+          className="grid size-9 shrink-0 place-items-center rounded-full text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-50"
         >
-          <RotateCcw className="h-3.5 w-3.5" />
+          <RotateCcw className="size-4" />
         </button>
       )}
     </div>

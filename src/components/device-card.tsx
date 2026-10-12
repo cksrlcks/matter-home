@@ -60,7 +60,7 @@ export function DeviceCard({ device, manage, className }: Props) {
         device.online ? (
           [stateLabel, device.vendorName ?? "Matter"].join(" · ")
         ) : (
-          <Badge>Offline</Badge>
+          <Badge className="mt-1.5">Offline</Badge>
         )
       }
       actions={

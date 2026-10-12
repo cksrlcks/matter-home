@@ -57,7 +57,7 @@ export function SmartThingsDeviceCard({
           name
         )
       }
-      subtitle={switchOn === null ? <Badge>상태 없음</Badge> : subtitle}
+      subtitle={switchOn === null ? <Badge className="mt-1.5">상태 없음</Badge> : subtitle}
       href={camera ? `/devices/smartthings/${device.deviceId}` : undefined}
       linkLabel={`${name} 실시간 보기`}
       actions={

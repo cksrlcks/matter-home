@@ -45,14 +45,20 @@ export function matterKind(device: DeviceDto, sw?: DeviceSwitchDto): DeviceKind 
   return kindFromHint(`${sw.name} ${type}`, "switch");
 }
 
-// SmartThings 기기의 종류. c2c-switch는 대부분 조명이라 못 맞추면 전구로 둔다.
+// SmartThings 기기의 종류.
+// c2c-switch(켜고 끄는 스위치)는 대부분 조명이라 이름으로 못 맞추면 전구로 두고,
+// 그 밖의 기기(에어컨, 가전 등)는 못 맞추면 기타(칩)로 둔다.
 export function smartThingsKind(
   device: { deviceTypeName?: string; label?: string; name: string },
   camera: boolean,
 ): DeviceKind {
   if (camera) return "camera";
+  if (device.name === "c2c-switch") {
+    // 기기 유형 이름이 전부 "switch"라서 사용자가 붙인 이름만 본다.
+    return kindFromHint(device.label ?? "", "light");
+  }
   return kindFromHint(
     `${device.deviceTypeName ?? ""} ${device.label ?? ""} ${device.name}`,
-    "light",
+    "other",
   );
 }

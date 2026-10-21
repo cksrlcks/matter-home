@@ -1,11 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
-import {
-  AUTH_COOKIE,
-  SESSION_TTL_SECONDS,
-  verifyCredentials,
-} from "@/lib/auth/config";
+import { sessionCookie, verifyCredentials } from "@/lib/auth/config";
 import { createSessionToken } from "@/lib/auth/token";
 
 const loginSchema = z.object({
@@ -33,14 +29,6 @@ export async function POST(request: Request) {
 
   const token = await createSessionToken(username);
   const response = NextResponse.json({ success: true });
-  response.cookies.set({
-    name: AUTH_COOKIE,
-    value: token,
-    httpOnly: true,
-    sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
-    path: "/",
-    maxAge: SESSION_TTL_SECONDS,
-  });
+  response.cookies.set(sessionCookie(token));
   return response;
 }

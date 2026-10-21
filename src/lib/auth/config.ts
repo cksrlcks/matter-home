@@ -3,8 +3,22 @@
 
 export const AUTH_COOKIE = "mh_session";
 
-// 세션 유효기간 (7일)
-export const SESSION_TTL_SECONDS = 60 * 60 * 24 * 7;
+// 세션 유효기간: 브라우저 쿠키 최대치(400일). proxy가 하루 지난 세션을 다시 발급해
+// 접속하는 한 만료되지 않는다.
+export const SESSION_TTL_SECONDS = 60 * 60 * 24 * 400;
+export const SESSION_RENEW_AFTER_SECONDS = 60 * 60 * 24;
+
+export function sessionCookie(token: string) {
+  return {
+    name: AUTH_COOKIE,
+    value: token,
+    httpOnly: true,
+    sameSite: "lax" as const,
+    secure: process.env.NODE_ENV === "production",
+    path: "/",
+    maxAge: SESSION_TTL_SECONDS,
+  };
+}
 
 export function getAuthSecret(): string {
   const secret = process.env.AUTH_SECRET;

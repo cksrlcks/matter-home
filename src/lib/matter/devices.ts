@@ -205,8 +205,62 @@ function toDeviceDto(node: MatterNode, names: NameOverrides): DeviceDto {
   };
 }
 
+// 벽 스위치를 직접 누른 변경은 구독 보고가 빠지면 캐시에 반영되지 않는다.
+// 그래서 주기적으로 OnOff 값을 기기에서 직접 읽어 캐시를 보정한다.
+const ONOFF_REFRESH_INTERVAL_MS = 10_000;
+// 첫 화면이 꺼짐으로 보이지 않도록 보정을 잠깐 기다린다. 넘으면 다음 폴링에 반영된다.
+const ONOFF_REFRESH_WAIT_MS = 2_000;
+const globalForRefresh = globalThis as unknown as {
+  __onOffRefresh?: { at: number; running: Promise<void> | null };
+};
+const onOffRefresh = (globalForRefresh.__onOffRefresh ??= { at: 0, running: null });
+
+async function readOnOff(
+  client: Awaited<ReturnType<typeof getMatterClient>>,
+): Promise<void> {
+  const nodes = Object.values(client.nodes).filter(
+    (node) => node.available && !isTestNodeId(node.node_id),
+  );
+  await Promise.allSettled(
+    nodes.map(async (node) => {
+      const paths = onOffEndpoints(node).map(
+        (ep) => `${ep}/${ONOFF_CLUSTER_ID}/${ONOFF_ATTR_ID}`,
+      );
+      if (paths.length === 0) return;
+      const values = await client.readAttribute(node.node_id, paths, 5_000);
+      // 읽는 동안 이벤트로 교체됐을 수 있으니 최신 노드에 덮어쓴다.
+      const latest = client.nodes[String(node.node_id)];
+      if (!latest) return;
+      for (const path of paths) {
+        if (typeof values[path] === "boolean") latest.attributes[path] = values[path];
+      }
+    }),
+  );
+}
+
+function refreshOnOff(
+  client: Awaited<ReturnType<typeof getMatterClient>>,
+): Promise<void> {
+  if (
+    !onOffRefresh.running &&
+    Date.now() - onOffRefresh.at > ONOFF_REFRESH_INTERVAL_MS
+  ) {
+    onOffRefresh.at = Date.now();
+    onOffRefresh.running = readOnOff(client).finally(() => {
+      onOffRefresh.running = null;
+    });
+  }
+  const running = onOffRefresh.running;
+  if (!running) return Promise.resolve();
+  return Promise.race([
+    running,
+    new Promise<void>((r) => setTimeout(r, ONOFF_REFRESH_WAIT_MS)),
+  ]);
+}
+
 export async function getDevices(): Promise<DeviceDto[]> {
   const client = await getMatterClient();
+  await refreshOnOff(client);
   // startListening() 이후 client.nodes는 node_*/attribute_updated 이벤트로 실시간
   // 갱신되는 로컬 캐시다. getNodes()로 매번 get_nodes를 왕복하지 않고 캐시를 읽는다.
   const nodes = Object.values(client.nodes);

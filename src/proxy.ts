@@ -1,7 +1,12 @@
 import { NextResponse, type NextRequest } from "next/server";
 
-import { AUTH_COOKIE } from "@/lib/auth/config";
-import { verifySessionToken } from "@/lib/auth/token";
+import {
+  AUTH_COOKIE,
+  SESSION_RENEW_AFTER_SECONDS,
+  SESSION_TTL_SECONDS,
+  sessionCookie,
+} from "@/lib/auth/config";
+import { createSessionToken, verifySessionToken } from "@/lib/auth/token";
 
 // Next.js 16: middleware → proxy 로 이름이 바뀌었고 Node.js runtime에서 동작한다.
 // 이건 첫 번째 방어선일 뿐이며, 실제 인가 검증은 각 route handler에서도 다시 수행한다.
@@ -51,7 +56,13 @@ export async function proxy(request: NextRequest) {
     return NextResponse.next({ request: { headers } });
   }
 
-  return NextResponse.next();
+  // 발급 후 하루가 지난 세션은 새로 발급해 만료를 계속 뒤로 민다. (사실상 영구 로그인)
+  const response = NextResponse.next();
+  const issuedAgo = SESSION_TTL_SECONDS - (session.exp - Date.now() / 1000);
+  if (issuedAgo > SESSION_RENEW_AFTER_SECONDS) {
+    response.cookies.set(sessionCookie(await createSessionToken(session.sub)));
+  }
+  return response;
 }
 
 export const config = {

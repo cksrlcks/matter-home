@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -77,6 +77,9 @@ type Tile = {
 );
 
 const NO_GROUP = "group:none";
+const ST_REFRESH_INTERVAL_MS = 10_000;
+// 방금 누른 값을 유지하는 시간. 새로고침 주기보다 길어야 늦은 서버값에 안 밀린다.
+const ST_PENDING_TTL = 15_000;
 const containerId = (groupId: number | null) =>
   groupId === null ? NO_GROUP : `group:${groupId}`;
 const containerGroupId = (id: string) =>
@@ -101,10 +104,25 @@ export function HomeBoard({ initialDashboard, smartThings }: Props) {
   // 편집 모드에서는 끌고 있는 동안의 배치를 draft에 두고, 놓을 때마다 저장한다.
   const [draft, setDraft] = useState<DashboardItemDto[] | null>(null);
   const [sheetKey, setSheetKey] = useState<string | null>(null);
-  // SmartThings 스위치는 서버가 내려준 상태 위에 방금 누른 값을 덮어쓴다.
+  // SmartThings 스위치는 서버가 내려준 상태 위에 방금 누른 값을 잠깐(ST_PENDING_TTL) 덮어쓴다.
+  // 영구히 덮으면 벽 스위치·다른 앱으로 바뀐 값을 못 따라간다.
   const [stState, setStState] = useState<Record<string, boolean>>({});
   const [stPending, setStPending] = useState<Record<string, boolean>>({});
   const editing = draft !== null;
+
+  // SmartThings 상태는 서버 렌더에서만 읽힌다. 앱을 다시 열었을 때(백그라운드 복귀)와
+  // 주기적으로 서버 데이터를 다시 받아 오래된 상태가 남지 않게 한다.
+  useEffect(() => {
+    const refresh = () => {
+      if (document.visibilityState === "visible") router.refresh();
+    };
+    const timer = setInterval(refresh, ST_REFRESH_INTERVAL_MS);
+    document.addEventListener("visibilitychange", refresh);
+    return () => {
+      clearInterval(timer);
+      document.removeEventListener("visibilitychange", refresh);
+    };
+  }, [router]);
 
   const sensors = useSensors(
     useSensor(MouseSensor, { activationConstraint: { distance: 6 } }),
@@ -139,6 +157,17 @@ export function HomeBoard({ initialDashboard, smartThings }: Props) {
     try {
       await setSwitchAction(deviceId, next);
       setStState((prev) => ({ ...prev, [deviceId]: next }));
+      router.refresh();
+      setTimeout(
+        () =>
+          setStState((prev) => {
+            if (prev[deviceId] !== next) return prev;
+            const rest = { ...prev };
+            delete rest[deviceId];
+            return rest;
+          }),
+        ST_PENDING_TTL,
+      );
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "기기 제어에 실패했습니다.");
     } finally {
